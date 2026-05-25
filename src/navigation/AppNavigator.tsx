@@ -10,6 +10,7 @@ import {
   SplashScreen,
   LoginScreen,
   RegisterScreen,
+  ResetPasswordScreen,
   DashboardScreen,
   ClientsScreen,
   TicketsScreen,
@@ -108,11 +109,13 @@ export function AppNavigator() {
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',
+        animationDuration: 250,
       }}
     >
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="Main" component={MainTabs} />
       <Stack.Screen name="WhatsAppLogin" component={WhatsAppLoginScreen} />
 

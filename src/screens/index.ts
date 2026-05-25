@@ -15,6 +15,7 @@ export { default as NewClientScreen } from './NewClientScreen';
 export { default as AIAssistantScreen } from './AIAssistantScreen';
 export { default as WhatsAppLoginScreen } from './WhatsAppLoginScreen';
 export { default as PlaceholderScreen } from './PlaceholderScreen';
+export { default as ResetPasswordScreen } from './ResetPasswordScreen';
 export { default as TicketDetailScreen } from './TicketDetailScreen';
 export { default as ClientDetailScreen } from './ClientDetailScreen';
 export { default as NewQuoteScreen } from './NewQuoteScreen';

@@ -102,7 +102,7 @@ export default function LoginScreen({ navigation }: any) {
 
           <TouchableOpacity
             style={styles.forgotPassword}
-            onPress={() => Alert.alert('Recuperar contraseña', 'Te enviaremos un link de recuperación a tu email')}
+            onPress={() => navigation.navigate('ResetPassword')}
           >
             <Text style={[styles.forgotText, { color: colors.accent }]}>¿Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
