@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { AnimatedTabIcon } from '../components/AnimatedTabIcon';
 import { useAppStore } from '../store';
 import { Colors } from '../theme/colors';
 import {
@@ -36,6 +37,7 @@ import {
   NewInventoryScreen,
   HelpScreen,
   AboutScreen,
+  MapPickerScreen,
 } from '../screens';
 
 const Stack = createNativeStackNavigator();
@@ -69,7 +71,7 @@ function MainTabs() {
               iconName = focused ? 'hardware-chip' : 'hardware-chip-outline';
               break;
           }
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <AnimatedTabIcon name={iconName} size={size} color={color} focused={focused} />;
         },
         tabBarActiveTintColor: theme.accent,
         tabBarInactiveTintColor: theme.tabBarInactive,
@@ -126,6 +128,7 @@ export function AppNavigator() {
       <Stack.Screen name="Inventory" component={InventoryScreen} />
       <Stack.Screen name="NewTicket" component={NewTicketScreen} />
       <Stack.Screen name="NewClient" component={NewClientScreen} />
+      <Stack.Screen name="MapPicker" component={MapPickerScreen} />
 
       {/* Profile sub-screens */}
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />

@@ -32,8 +32,7 @@ const MOCK_DATA = {
 };
 
 function isSupabaseConfigured(): boolean {
-  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-  return !!url && url !== '' && !url.includes('your-project');
+  return process.env.EXPO_PUBLIC_SUPABASE_ENABLED === 'true';
 }
 
 async function tryWithSupabase<T>(supabaseCall: () => Promise<T>, mockData: T, cacheKey?: string): Promise<T> {
@@ -68,22 +67,25 @@ export const api = {
   },
 
   async createClient(client: Partial<Client>): Promise<Client> {
-    if (!isSupabaseConfigured()) return { ...client, id: Date.now().toString(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as Client;
+    if (!isSupabaseConfigured()) { await cache.remove('clients'); return { ...client, id: Date.now().toString(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as Client; }
     const { data, error } = await supabase.from('clients').insert(client).select().single();
     if (error) throw error;
+    await cache.remove('clients');
     return data;
   },
 
   async updateClient(id: string, updates: Partial<Client>) {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured()) { await cache.remove('clients'); return; }
     const { error } = await supabase.from('clients').update(updates).eq('id', id);
     if (error) throw error;
+    await cache.remove('clients');
   },
 
   async deleteClient(id: string) {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured()) { await cache.remove('clients'); return; }
     const { error } = await supabase.from('clients').delete().eq('id', id);
     if (error) throw error;
+    await cache.remove('clients');
   },
 
   async getTickets(): Promise<Ticket[]> {
@@ -99,16 +101,25 @@ export const api = {
   },
 
   async createTicket(ticket: Partial<Ticket>): Promise<Ticket> {
-    if (!isSupabaseConfigured()) return { ...ticket, id: Date.now().toString(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as Ticket;
+    if (!isSupabaseConfigured()) { await cache.remove('tickets'); return { ...ticket, id: Date.now().toString(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as Ticket; }
     const { data, error } = await supabase.from('tickets').insert(ticket).select().single();
     if (error) throw error;
+    await cache.remove('tickets');
     return data;
   },
 
   async updateTicket(id: string, updates: Partial<Ticket>) {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured()) { await cache.remove('tickets'); return; }
     const { error } = await supabase.from('tickets').update(updates).eq('id', id);
     if (error) throw error;
+    await cache.remove('tickets');
+  },
+
+  async deleteTicket(id: string) {
+    if (!isSupabaseConfigured()) { await cache.remove('tickets'); return; }
+    const { error } = await supabase.from('tickets').delete().eq('id', id);
+    if (error) throw error;
+    await cache.remove('tickets');
   },
 
   async getInventory(): Promise<InventoryItem[]> {
@@ -118,21 +129,65 @@ export const api = {
         if (error) throw error;
         return data || [];
       },
-      MOCK_DATA.inventory as any
+      MOCK_DATA.inventory as any,
+      'inventory'
     );
   },
 
   async createInventoryItem(item: Partial<InventoryItem>): Promise<InventoryItem> {
-    if (!isSupabaseConfigured()) return { ...item, id: Date.now().toString(), created_at: new Date().toISOString() } as InventoryItem;
+    if (!isSupabaseConfigured()) { await cache.remove('inventory'); return { ...item, id: Date.now().toString(), created_at: new Date().toISOString() } as InventoryItem; }
     const { data, error } = await supabase.from('inventory').insert(item).select().single();
     if (error) throw error;
+    await cache.remove('inventory');
     return data;
   },
 
   async updateInventoryItem(id: string, updates: Partial<InventoryItem>) {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured()) { await cache.remove('inventory'); return; }
     const { error } = await supabase.from('inventory').update(updates).eq('id', id);
     if (error) throw error;
+    await cache.remove('inventory');
+  },
+
+  async deleteInventoryItem(id: string) {
+    if (!isSupabaseConfigured()) { await cache.remove('inventory'); return; }
+    const { error } = await supabase.from('inventory').delete().eq('id', id);
+    if (error) throw error;
+    await cache.remove('inventory');
+  },
+
+  async getQuotes(): Promise<Quote[]> {
+    return tryWithSupabase(
+      async () => {
+        const { data, error } = await supabase.from('quotes').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+      },
+      [] as any,
+      'quotes'
+    );
+  },
+
+  async createQuote(quote: Partial<Quote>): Promise<Quote> {
+    if (!isSupabaseConfigured()) { await cache.remove('quotes'); return { ...quote, id: Date.now().toString(), created_at: new Date().toISOString() } as Quote; }
+    const { data, error } = await supabase.from('quotes').insert(quote).select().single();
+    if (error) throw error;
+    await cache.remove('quotes');
+    return data;
+  },
+
+  async updateQuote(id: string, updates: Partial<Quote>) {
+    if (!isSupabaseConfigured()) { await cache.remove('quotes'); return; }
+    const { error } = await supabase.from('quotes').update(updates).eq('id', id);
+    if (error) throw error;
+    await cache.remove('quotes');
+  },
+
+  async deleteQuote(id: string) {
+    if (!isSupabaseConfigured()) { await cache.remove('quotes'); return; }
+    const { error } = await supabase.from('quotes').delete().eq('id', id);
+    if (error) throw error;
+    await cache.remove('quotes');
   },
 
   async getDashboardStats(): Promise<DashboardStats> {

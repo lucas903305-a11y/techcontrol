@@ -12,11 +12,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Input, Button } from '../components';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { authService } from '../services/auth';
 
 export default function LoginScreen({ navigation }: any) {
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,7 +27,7 @@ export default function LoginScreen({ navigation }: any) {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Completá todos los campos');
+      Alert.alert(t('common.error'), t('errors.required'));
       return;
     }
     setLoading(true);
@@ -32,7 +35,7 @@ export default function LoginScreen({ navigation }: any) {
       await authService.signIn(email, password);
       navigation.replace('Main');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Error al iniciar sesión');
+      Alert.alert(t('common.error'), error.message || t('errors.genericError'));
     } finally {
       setLoading(false);
     }
@@ -43,12 +46,13 @@ export default function LoginScreen({ navigation }: any) {
       await authService.signInWithGoogle();
       navigation.replace('Main');
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert(t('common.error'), error.message);
     }
   };
 
   return (
-    <KeyboardAvoidingView
+    <ScreenWrapper>
+      <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
@@ -65,14 +69,14 @@ export default function LoginScreen({ navigation }: any) {
           </Text>
         </View>
 
-        <Text style={[styles.welcome, { color: colors.text }]}>Bienvenido de vuelta</Text>
+        <Text style={[styles.welcome, { color: colors.text }]}>{t('auth.welcome')}</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Iniciá sesión para gestionar tus trabajos
+          {t('auth.welcomeSubtitle')}
         </Text>
 
         <View style={styles.form}>
           <Input
-            label="Email"
+            label={t('auth.email')}
             placeholder="tu@email.com"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -82,7 +86,7 @@ export default function LoginScreen({ navigation }: any) {
 
           <View style={styles.passwordContainer}>
             <Input
-              label="Contraseña"
+              label={t('auth.password')}
               placeholder="••••••••"
               secureTextEntry={!showPassword}
               value={password}
@@ -104,11 +108,11 @@ export default function LoginScreen({ navigation }: any) {
             style={styles.forgotPassword}
             onPress={() => navigation.navigate('ResetPassword')}
           >
-            <Text style={[styles.forgotText, { color: colors.accent }]}>¿Olvidaste tu contraseña?</Text>
+            <Text style={[styles.forgotText, { color: colors.accent }]}>{t('auth.forgotPassword')}</Text>
           </TouchableOpacity>
 
           <Button
-            title="Iniciar sesión"
+            title={t('auth.login')}
             onPress={handleLogin}
             loading={loading}
             style={styles.loginButton}
@@ -116,7 +120,7 @@ export default function LoginScreen({ navigation }: any) {
 
           <View style={styles.divider}>
             <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            <Text style={[styles.dividerText, { color: colors.textTertiary }]}>o continuá con</Text>
+            <Text style={[styles.dividerText, { color: colors.textTertiary }]}>{t('auth.orContinueWith')}</Text>
             <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
           </View>
 
@@ -137,13 +141,14 @@ export default function LoginScreen({ navigation }: any) {
         </View>
 
         <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: colors.textSecondary }]}>¿No tenés cuenta? </Text>
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>{t('auth.noAccount')} </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={[styles.footerLink, { color: colors.accent }]}>Crear cuenta</Text>
+            <Text style={[styles.footerLink, { color: colors.accent }]}>{t('auth.createAccount')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </ScreenWrapper>
   );
 }
 

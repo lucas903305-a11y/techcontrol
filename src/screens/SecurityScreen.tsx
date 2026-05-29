@@ -4,50 +4,61 @@ import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Input, Button } from '../components';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
+import { useAppStore } from '../store';
+import { authService } from '../services/auth';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 export default function SecurityScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const showToast = useAppStore((s) => s.showToast);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!currentPassword || !newPassword) {
-      Alert.alert('Error', 'Completá todos los campos');
+      Alert.alert(t('common.error'), t('errors.required'));
       return;
     }
     if (newPassword.length < 8) {
-      Alert.alert('Error', 'La contraseña debe tener al menos 8 caracteres');
+      Alert.alert(t('common.error'), t('errors.weakPassword'));
       return;
     }
-    Alert.alert('Contraseña actualizada', 'Tu contraseña se cambió correctamente');
-    setCurrentPassword('');
-    setNewPassword('');
+    try {
+      await authService.resetPassword(newPassword);
+      showToast(t('security.passwordUpdated'), 'success');
+      setCurrentPassword('');
+      setNewPassword('');
+    } catch {
+      showToast(t('security.passwordUpdateError'), 'error');
+    }
   };
 
   const securityItems = [
-    { icon: 'finger-print-outline', label: 'Biométrico', desc: 'Huella dactilar / Face ID' },
-    { icon: 'lock-closed-outline', label: 'PIN de acceso', desc: 'Proteger app con PIN' },
-    { icon: 'key-outline', label: '2FA', desc: 'Autenticación de dos factores' },
+    { icon: 'finger-print-outline', label: t('security.biometric'), desc: t('security.biometricDesc') },
+    { icon: 'lock-closed-outline', label: t('security.pin'), desc: t('security.pinDesc') },
+    { icon: 'key-outline', label: t('security.twoFA'), desc: t('security.twoFADesc') },
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Seguridad</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.security')}</Text>
         <View style={{ width: 24 }} />
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Cambiar contraseña</Text>
-          <Input label="Contraseña actual" placeholder="••••••••" secureTextEntry value={currentPassword} onChangeText={setCurrentPassword} />
-          <Input label="Nueva contraseña" placeholder="Mínimo 8 caracteres" secureTextEntry value={newPassword} onChangeText={setNewPassword} />
-          <Button title="Actualizar contraseña" onPress={handleChangePassword} />
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>{t('security.changePassword')}</Text>
+          <Input label={t('security.currentPassword')} placeholder="••••••••" secureTextEntry value={currentPassword} onChangeText={setCurrentPassword} />
+          <Input label={t('security.newPassword')} placeholder={t('security.minChars')} secureTextEntry value={newPassword} onChangeText={setNewPassword} />
+          <Button title={t('security.updatePassword')} onPress={handleChangePassword} />
         </View>
 
-        <Text style={[styles.sectionLabel, { color: colors.textSecondary, marginTop: Spacing.xl }]}>Opciones de seguridad</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary, marginTop: Spacing.xl }]}>{t('security.securityOptions')}</Text>
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           {securityItems.map((item, i) => (
             <View key={i} style={[styles.row, i < securityItems.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.divider }]}>
@@ -61,7 +72,7 @@ export default function SecurityScreen({ navigation }: any) {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }
 

@@ -11,11 +11,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Button } from '../components';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
 import { authService } from '../services/auth';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 export default function ProfileScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const user = useAppStore((s) => s.user);
   const logout = useAppStore((s) => s.logout);
 
@@ -26,22 +29,22 @@ export default function ProfileScreen({ navigation }: any) {
   };
 
   const menuItems = [
-    { icon: 'person-outline', label: 'Mi perfil', screen: 'EditProfile' },
-    { icon: 'briefcase-outline', label: 'Mi empresa', screen: 'Company' },
-    { icon: 'card-outline', label: 'Plan y facturación', screen: 'Billing' },
-    { icon: 'notifications-outline', label: 'Notificaciones', screen: 'Notifications' },
-    { icon: 'shield-checkmark-outline', label: 'Seguridad', screen: 'Security' },
-    { icon: 'help-circle-outline', label: 'Ayuda y soporte', screen: 'Help' },
-    { icon: 'information-circle-outline', label: 'Acerca de', screen: 'About' },
+    { icon: 'person-outline', label: t('profile.title'), screen: 'EditProfile' },
+    { icon: 'briefcase-outline', label: t('profile.myCompany'), screen: 'Company' },
+    { icon: 'card-outline', label: t('profile.billing'), screen: 'Billing' },
+    { icon: 'notifications-outline', label: t('profile.notifications'), screen: 'Notifications' },
+    { icon: 'shield-checkmark-outline', label: t('profile.security'), screen: 'Security' },
+    { icon: 'help-circle-outline', label: t('profile.help'), screen: 'Help' },
+    { icon: 'information-circle-outline', label: t('profile.about'), screen: 'About' },
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Perfil</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.title')}</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
           <Ionicons name="settings-outline" size={24} color={colors.text} />
         </TouchableOpacity>
@@ -52,27 +55,27 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={[styles.avatar, { backgroundColor: colors.accent }]}>
             <Ionicons name="person" size={40} color="#FFFFFF" />
           </View>
-          <Text style={[styles.name, { color: colors.text }]}>{user?.name || 'Juan Pérez'}</Text>
-          <Text style={[styles.role, { color: colors.textSecondary }]}>Técnico independiente</Text>
+          <Text style={[styles.name, { color: colors.text }]}>{user?.name || t('profile.defaultName')}</Text>
+          <Text style={[styles.role, { color: colors.textSecondary }]}>{t('profile.role')}</Text>
           <View style={[styles.planBadge, { backgroundColor: colors.accent + '15' }]}>
-            <Text style={[styles.planText, { color: colors.accent }]}>Plan Pro</Text>
+            <Text style={[styles.planText, { color: colors.accent }]}>{t('profile.planPro')}</Text>
           </View>
         </View>
 
         <View style={[styles.statsRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.text }]}>47</Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Trabajos</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.jobs')}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.divider }]} />
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.text }]}>4.9</Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Rating</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.rating')}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.divider }]} />
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.text }]}>12</Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Clientes</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('client.title')}</Text>
           </View>
         </View>
 
@@ -80,6 +83,7 @@ export default function ProfileScreen({ navigation }: any) {
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
+              accessibilityLabel={item.label}
               style={[styles.menuItem, { borderBottomColor: colors.divider }]}
               onPress={() => navigation.navigate(item.screen)}
             >
@@ -90,9 +94,9 @@ export default function ProfileScreen({ navigation }: any) {
           ))}
         </View>
 
-        <Button title="Cerrar sesión" variant="outline" onPress={handleLogout} style={styles.logoutButton} />
+        <Button title={t('profile.logout')} variant="outline" onPress={handleLogout} style={styles.logoutButton} />
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }
 

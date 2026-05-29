@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, DashboardStats } from '../types';
 import { ToastType } from '../components';
+import { SupportedLocale } from '../i18n';
 
 interface ToastState {
   visible: boolean;
@@ -15,6 +16,7 @@ interface AppState {
   isAuthenticated: boolean;
   isDarkMode: boolean;
   isOnboardingDone: boolean;
+  locale: SupportedLocale;
   stats: DashboardStats | null;
   loading: boolean;
   toast: ToastState;
@@ -26,6 +28,7 @@ interface AppState {
   setOnboardingDone: (value: boolean) => void;
   setStats: (stats: DashboardStats) => void;
   setLoading: (loading: boolean) => void;
+  setLocale: (locale: SupportedLocale) => void;
   showToast: (message: string, type?: ToastType) => void;
   hideToast: () => void;
   logout: () => void;
@@ -38,6 +41,7 @@ export const useAppStore = create<AppState>()(
       isAuthenticated: false,
       isDarkMode: false,
       isOnboardingDone: false,
+      locale: 'es' as SupportedLocale,
       stats: null,
       loading: false,
       toast: { visible: false, message: '', type: 'info' },
@@ -49,6 +53,7 @@ export const useAppStore = create<AppState>()(
       setOnboardingDone: (value) => set({ isOnboardingDone: value }),
       setStats: (stats) => set({ stats }),
       setLoading: (loading) => set({ loading }),
+      setLocale: (locale) => set({ locale }),
       showToast: (message, type = 'info') => set({ toast: { visible: true, message, type } }),
       hideToast: () => set({ toast: { visible: false, message: '', type: 'info' } }),
       logout: () =>
@@ -66,6 +71,7 @@ export const useAppStore = create<AppState>()(
         isAuthenticated: state.isAuthenticated,
         isDarkMode: state.isDarkMode,
         isOnboardingDone: state.isOnboardingDone,
+        locale: state.locale,
       }),
     }
   )

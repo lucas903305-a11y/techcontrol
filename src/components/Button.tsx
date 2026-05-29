@@ -1,11 +1,17 @@
 import React from 'react';
 import {
-  TouchableOpacity,
   Text,
   StyleSheet,
   ActivityIndicator,
   ViewStyle,
+  Pressable,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  FadeIn,
+} from 'react-native-reanimated';
 import { Colors } from '../theme/colors';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Typography } from '../theme/typography';
@@ -32,6 +38,7 @@ export function Button({
   style,
 }: ButtonProps) {
   const { colors } = useTheme();
+  const scale = useSharedValue(1);
 
   const bgColor = {
     primary: colors.accent,
@@ -55,10 +62,17 @@ export function Button({
     lg: 56,
   }[size];
 
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
   return (
-    <TouchableOpacity
+    <AnimatedPressable
       style={[
         styles.button,
+        animStyle,
         {
           backgroundColor: bgColor,
           height,
@@ -68,9 +82,10 @@ export function Button({
         },
         style,
       ]}
+      onPressIn={() => { scale.value = withSpring(0.95, { stiffness: 300, damping: 10 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { stiffness: 300, damping: 10 }); }}
       onPress={() => { hapticLight(); onPress(); }}
       disabled={disabled || loading}
-      activeOpacity={0.8}
     >
       {loading ? (
         <ActivityIndicator color={textColor} />
@@ -87,7 +102,7 @@ export function Button({
           {title}
         </Text>
       )}
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
 }
 

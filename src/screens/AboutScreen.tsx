@@ -3,30 +3,33 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 export default function AboutScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const features = [
-    'Gestión de clientes y equipos',
-    'Sistema de tickets inteligente',
-    'Presupuestos con PDF',
-    'Mapa de clientes y rutas',
-    'Integración WhatsApp',
-    'Asistente IA para diagnósticos',
-    'Control de inventario',
-    'Reportes y estadísticas',
-    'Modo oscuro',
-    'Multi-técnico',
+    t('about.feature1'),
+    t('about.feature2'),
+    t('about.feature3'),
+    t('about.feature4'),
+    t('about.feature5'),
+    t('about.feature6'),
+    t('about.feature7'),
+    t('about.feature8'),
+    t('about.feature9'),
+    t('about.feature10'),
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Acerca de</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.about')}</Text>
         <View style={{ width: 24 }} />
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -35,17 +38,17 @@ export default function AboutScreen({ navigation }: any) {
             <Ionicons name="hardware-chip-outline" size={36} color="#FFFFFF" />
           </View>
           <Text style={[styles.appName, { color: colors.text }]}>TechControl</Text>
-          <Text style={[styles.version, { color: colors.textSecondary }]}>Versión 1.0.0</Text>
+          <Text style={[styles.version, { color: colors.textSecondary }]}>{t('about.versionLabel')} 1.0.0</Text>
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.description, { color: colors.textSecondary }]}>
-            TechControl es la plataforma de gestión inteligente para técnicos IT, instaladores y empresas de soporte en Latinoamérica. Diseñada para simplificar la administración de clientes, tickets, presupuestos y trabajos desde tu celular.
+            {t('about.description')}
           </Text>
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Funcionalidades</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('about.featuresTitle')}</Text>
           {features.map((f, i) => (
             <View key={i} style={[styles.featureRow, i < features.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.divider }]}>
               <Ionicons name="checkmark-circle" size={18} color={colors.success} />
@@ -55,7 +58,7 @@ export default function AboutScreen({ navigation }: any) {
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Tecnologías</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('about.technologies')}</Text>
           <View style={styles.techRow}>
             {['React Native', 'Expo', 'Supabase', 'OpenAI'].map((tech, i) => (
               <View key={i} style={[styles.techBadge, { backgroundColor: colors.accent + '15' }]}>
@@ -66,10 +69,10 @@ export default function AboutScreen({ navigation }: any) {
         </View>
 
         <Text style={[styles.footer, { color: colors.textTertiary }]}>
-          © 2025 TechControl. Todos los derechos reservados.
+          {t('about.footer')}
         </Text>
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }
 

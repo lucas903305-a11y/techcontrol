@@ -12,12 +12,15 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Input, Button, Badge } from '../components';
+import { useTranslation } from '../hooks/useTranslation';
 import { useTheme } from '../hooks/useTheme';
 import { api } from '../services/api';
 import { InventoryItem } from '../types';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 export default function InventoryScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -41,8 +44,8 @@ export default function InventoryScreen({ navigation }: any) {
     .filter((i) => !search || i.name.toLowerCase().includes(search.toLowerCase()) || i.category?.toLowerCase().includes(search.toLowerCase()));
 
   const stockFilters = [
-    { key: 'all', label: 'Todos' },
-    { key: 'low', label: `Stock bajo (${items.filter((i) => i.quantity <= i.min_stock).length})` },
+    { key: 'all', label: t('common.all') },
+    { key: 'low', label: `${t('inventory.lowStockFilter')} (${items.filter((i) => i.quantity <= i.min_stock).length})` },
   ];
 
   const renderItem = ({ item }: { item: InventoryItem }) => (
@@ -55,7 +58,7 @@ export default function InventoryScreen({ navigation }: any) {
         </View>
         <View style={styles.itemInfo}>
           <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
-          <Text style={[styles.itemCategory, { color: colors.textSecondary }]}>{item.category || 'General'}</Text>
+          <Text style={[styles.itemCategory, { color: colors.textSecondary }]}>{item.category || t('inventory.general')}</Text>
         </View>
       </View>
       <View style={styles.itemFooter}>
@@ -63,18 +66,18 @@ export default function InventoryScreen({ navigation }: any) {
           <Text style={[styles.quantity, { color: item.quantity <= item.min_stock ? colors.error : colors.success }]}>{item.quantity}</Text>
           <Text style={[styles.unit, { color: colors.textSecondary }]}>{item.unit}</Text>
         </View>
-        {item.quantity <= item.min_stock && <Badge label="Stock bajo" variant="error" />}
+        {item.quantity <= item.min_stock && <Badge label={t('inventory.lowStock')} variant="error" />}
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Inventario</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('inventory.title')}</Text>
         <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
           <TouchableOpacity><Ionicons name="qr-code-outline" size={24} color={colors.accent} /></TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('NewInventory')}><Ionicons name="add-circle" size={24} color={colors.accent} /></TouchableOpacity>
@@ -83,7 +86,7 @@ export default function InventoryScreen({ navigation }: any) {
 
       <View style={styles.searchContainer}>
         <Ionicons name="search-outline" size={18} color={colors.textSecondary} style={styles.searchIcon} />
-        <Input placeholder="Buscar producto..." value={search} onChangeText={setSearch} containerStyle={styles.searchInput} />
+        <Input placeholder={t('inventory.searchPlaceholder')} value={search} onChangeText={setSearch} containerStyle={styles.searchInput} />
       </View>
 
       <View style={styles.filterContainer}>
@@ -112,14 +115,14 @@ export default function InventoryScreen({ navigation }: any) {
             <View style={styles.empty}>
               <Ionicons name="cube-outline" size={48} color={colors.textTertiary} />
               <Text style={[styles.emptyText, { color: colors.textTertiary }]}>
-                {search ? 'Sin resultados para esta búsqueda' : 'Inventario vacío'}
+                {search ? t('inventory.noSearchResults') : t('inventory.empty')}
               </Text>
-              {!search && <Button title="Agregar producto" onPress={() => navigation.navigate('NewInventory')} />}
+              {!search && <Button title={t('inventory.addProduct')} onPress={() => navigation.navigate('NewInventory')} />}
             </View>
           }
         />
       )}
-    </View>
+    </ScreenWrapper>
   );
 }
 

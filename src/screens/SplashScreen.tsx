@@ -2,10 +2,13 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
+import { useTranslation } from '../hooks/useTranslation';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 const { width, height } = Dimensions.get('window');
 
 export default function SplashScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const scale = useRef(new Animated.Value(0.3)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
@@ -44,7 +47,7 @@ export default function SplashScreen({ navigation }: any) {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <ScreenWrapper style={styles.container}>
       <Animated.View
         style={[
           styles.logoContainer,
@@ -64,12 +67,12 @@ export default function SplashScreen({ navigation }: any) {
           style={[styles.line, { width: lineWidth }]}
         />
         <Text style={styles.subtitle}>
-          Gestión inteligente para técnicos IT
+          {t('splash.subtitle')}
         </Text>
       </Animated.View>
 
-      <Text style={styles.version}>v1.0.0</Text>
-    </View>
+      <Text style={styles.version}>{t('splash.version')}</Text>
+    </ScreenWrapper>
   );
 }
 

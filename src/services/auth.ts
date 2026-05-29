@@ -3,8 +3,7 @@ import { useAppStore } from '../store';
 import { User } from '../types';
 
 function isSupabaseConfigured(): boolean {
-  const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-  return !!url && url !== '' && !url.includes('your-project');
+  return process.env.EXPO_PUBLIC_SUPABASE_ENABLED === 'true';
 }
 
 function mockUser(email: string, name: string): User {

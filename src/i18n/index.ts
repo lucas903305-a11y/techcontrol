@@ -1,8 +1,9 @@
 import es from './es';
+import en from './en';
 
-export type SupportedLocale = 'es';
+export type SupportedLocale = 'es' | 'en';
 
-const translations: Record<SupportedLocale, typeof es> = { es };
+const translations: Record<SupportedLocale, typeof es> = { es, en };
 
 export function t(path: string, locale: SupportedLocale = 'es'): string {
   const keys = path.split('.');
@@ -17,4 +18,4 @@ export function t(path: string, locale: SupportedLocale = 'es'): string {
   return typeof result === 'string' ? result : path;
 }
 
-export { es };
+export { es, en };

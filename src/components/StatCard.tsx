@@ -1,11 +1,11 @@
 import React from 'react';
 import {
-  View,
   Text,
   StyleSheet,
   ViewStyle,
   ActivityIndicator,
 } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { useTheme } from '../hooks/useTheme';
@@ -17,13 +17,17 @@ interface StatCardProps {
   color?: string;
   loading?: boolean;
   style?: ViewStyle;
+  index?: number;
 }
 
-export function StatCard({ title, value, icon, color, loading, style }: StatCardProps) {
+export function StatCard({ title, value, icon, color, loading, style, index = 0 }: StatCardProps) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.shadow }, style]}>
-      <View
+    <Animated.View
+      entering={FadeInDown.delay(index * 100).duration(400).springify()}
+      style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.shadow }, style]}
+    >
+      <Animated.View
         style={[
           styles.iconContainer,
           { backgroundColor: color ? `${color}15` : `${colors.accent}15` },
@@ -34,7 +38,7 @@ export function StatCard({ title, value, icon, color, loading, style }: StatCard
           size={20}
           color={color || colors.accent}
         />
-      </View>
+      </Animated.View>
       {loading ? (
         <ActivityIndicator size="small" color={colors.accent} />
       ) : (
@@ -43,7 +47,7 @@ export function StatCard({ title, value, icon, color, loading, style }: StatCard
         </Text>
       )}
       <Text style={[styles.title, { color: colors.textSecondary }]}>{title}</Text>
-    </View>
+    </Animated.View>
   );
 }
 

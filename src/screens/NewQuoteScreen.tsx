@@ -8,12 +8,16 @@ import {
   Alert,
   TextInput,
 } from 'react-native';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../theme/colors';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Input, Button } from '../components';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
+import { useAppStore } from '../store';
 import { formatCurrency, openWhatsApp } from '../utils';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 interface QuoteItem {
   id: string;
@@ -25,6 +29,7 @@ interface QuoteItem {
 
 export default function NewQuoteScreen({ navigation, route }: any) {
   const { colors, isDark } = useTheme();
+  const { t, locale } = useTranslation();
   const [clientName, setClientName] = useState(route?.params?.client?.name || '');
   const [clientPhone, setClientPhone] = useState(route?.params?.client?.phone || '');
   const [items, setItems] = useState<QuoteItem[]>([
@@ -32,6 +37,7 @@ export default function NewQuoteScreen({ navigation, route }: any) {
   ]);
   const [taxPercent, setTaxPercent] = useState(21);
   const [notes, setNotes] = useState('');
+  const showToast = useAppStore((s) => s.showToast);
   const [loading, setLoading] = useState(false);
 
   const addItem = () => {
@@ -67,15 +73,15 @@ export default function NewQuoteScreen({ navigation, route }: any) {
 
   const handleSendWhatsApp = () => {
     if (!clientPhone) {
-      Alert.alert('Error', 'Ingresá el teléfono del cliente');
+      Alert.alert(t('common.error'), t('quote.phoneRequired'));
       return;
     }
     const summary = items
       .filter((i) => i.description)
-      .map((i) => `• ${i.description}: ${i.quantity} x $${i.unit_price.toLocaleString('es-AR')} = $${i.total.toLocaleString('es-AR')}`)
+      .map((i) => `• ${i.description}: ${i.quantity} x $${i.unit_price.toLocaleString(locale === 'en' ? 'en-US' : 'es-AR')} = $${i.total.toLocaleString(locale === 'en' ? 'en-US' : 'es-AR')}`)
       .join('\n');
 
-    const message = `🧾 *TechControl - Presupuesto ${generateQuoteNumber()}*\n\nCliente: ${clientName}\n\n${summary}\n\n*Subtotal:* $${subtotal.toLocaleString('es-AR')}\n*IVA (${taxPercent}%):* $${tax.toLocaleString('es-AR')}\n*TOTAL: $${total.toLocaleString('es-AR')}*\n\n${notes ? `Notas: ${notes}` : ''}\n\nGenerado con TechControl`;
+    const message = `🧾 *TechControl - ${t('quote.quoteNumber')} ${generateQuoteNumber()}*\n\n${t('quote.client')}: ${clientName}\n\n${summary}\n\n*${t('quote.subtotal')}:* $${subtotal.toLocaleString(locale === 'en' ? 'en-US' : 'es-AR')}\n*${t('quote.tax')} (${taxPercent}%):* $${tax.toLocaleString(locale === 'en' ? 'en-US' : 'es-AR')}\n*${t('quote.total')}: $${total.toLocaleString(locale === 'en' ? 'en-US' : 'es-AR')}*\n\n${notes ? `${t('quote.notes')}: ${notes}` : ''}\n\n${t('quote.generatedBy')}`;
 
     openWhatsApp(clientPhone, message);
   };
@@ -99,66 +105,72 @@ export default function NewQuoteScreen({ navigation, route }: any) {
         <body>
           <div class="header">
             <h1>TechControl</h1>
-            <p>Presupuesto: ${quoteNumber}</p>
-            <p>Fecha: ${new Date().toLocaleDateString('es-AR')}</p>
+            <p>${t('quote.quoteNumber')}: ${quoteNumber}</p>
+            <p>${t('quote.dateLabel')}: ${new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'es-AR')}</p>
           </div>
-          <p><strong>Cliente:</strong> ${clientName}</p>
+          <p><strong>${t('quote.client')}:</strong> ${clientName}</p>
           <table>
-            <tr><th>Descripción</th><th>Cant.</th><th>P. Unit.</th><th>Total</th></tr>
+            <tr><th>${t('quote.description')}</th><th>${t('quote.qty')}</th><th>${t('quote.unitPrice')}</th><th>${t('quote.itemTotal')}</th></tr>
             ${items.filter(i => i.description).map(i => `
-              <tr><td>${i.description}</td><td>${i.quantity}</td><td>$${i.unit_price.toLocaleString('es-AR')}</td><td>$${i.total.toLocaleString('es-AR')}</td></tr>
+              <tr><td>${i.description}</td><td>${i.quantity}</td><td>$${i.unit_price.toLocaleString(locale === 'en' ? 'en-US' : 'es-AR')}</td><td>$${i.total.toLocaleString(locale === 'en' ? 'en-US' : 'es-AR')}</td></tr>
             `).join('')}
           </table>
           <div class="total">
-            <p>Subtotal: $${subtotal.toLocaleString('es-AR')}</p>
-            <p>IVA: $${tax.toLocaleString('es-AR')}</p>
-            <p style="font-size:24px;">TOTAL: $${total.toLocaleString('es-AR')}</p>
+            <p>${t('quote.subtotal')}: $${subtotal.toLocaleString(locale === 'en' ? 'en-US' : 'es-AR')}</p>
+            <p>${t('quote.tax')}: $${tax.toLocaleString(locale === 'en' ? 'en-US' : 'es-AR')}</p>
+            <p style="font-size:24px;">${t('quote.total')}: $${total.toLocaleString(locale === 'en' ? 'en-US' : 'es-AR')}</p>
           </div>
-          ${notes ? `<p><strong>Notas:</strong> ${notes}</p>` : ''}
-          <div class="footer"><p>Generado con TechControl - Gestión inteligente para técnicos IT</p></div>
+          ${notes ? `<p><strong>${t('quote.notes')}:</strong> ${notes}</p>` : ''}
+          <div class="footer"><p>${t('quote.generatedBy')}</p></div>
         </body>
         </html>
       `;
 
-      Alert.alert('PDF generado', `Presupuesto ${quoteNumber} creado exitosamente. Total: ${formatCurrency(total)}`);
+      const { uri } = await Print.printToFileAsync({ html, base64: false });
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: `${t('quote.quoteNumber')} ${quoteNumber}` });
+      } else {
+        showToast(t('quote.pdfGenerated'), 'success');
+      }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo generar el PDF');
+      showToast(t('quote.pdfError'), 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Nuevo presupuesto</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('quote.title')}</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Input
-          label="Cliente"
-          placeholder="Nombre del cliente"
+          label={t('quote.client')}
+          placeholder={t('quote.clientPlaceholder')}
           value={clientName}
           onChangeText={setClientName}
         />
         <Input
-          label="WhatsApp del cliente"
-          placeholder="+54 11 2345-6789"
+          label={t('quote.clientWhatsapp')}
+          placeholder={t('quote.phonePlaceholder')}
           keyboardType="phone-pad"
           value={clientPhone}
           onChangeText={setClientPhone}
         />
 
-        <Text style={[styles.sectionLabel, { color: colors.text }]}>Items del presupuesto</Text>
+        <Text style={[styles.sectionLabel, { color: colors.text }]}>{t('quote.items')}</Text>
 
         {items.map((item, index) => (
           <View key={item.id} style={[styles.itemCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.itemHeader}>
-              <Text style={[styles.itemNumber, { color: colors.textSecondary }]}>Item #{index + 1}</Text>
+              <Text style={[styles.itemNumber, { color: colors.textSecondary }]}>{t('quote.itemNumber')} #{index + 1}</Text>
               {items.length > 1 && (
                 <TouchableOpacity onPress={() => removeItem(item.id)}>
                   <Ionicons name="trash-outline" size={18} color={colors.error} />
@@ -167,14 +179,14 @@ export default function NewQuoteScreen({ navigation, route }: any) {
             </View>
             <TextInput
               style={[styles.itemInput, { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border }]}
-              placeholder="Descripción del servicio/producto"
+              placeholder={t('quote.descriptionPlaceholder')}
               placeholderTextColor={colors.textTertiary}
               value={item.description}
               onChangeText={(v) => updateItem(item.id, 'description', v)}
             />
             <View style={styles.itemRow}>
               <View style={styles.itemField}>
-                <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Cant.</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('quote.qty')}</Text>
                 <TextInput
                   style={[styles.fieldInput, { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border }]}
                   keyboardType="numeric"
@@ -183,7 +195,7 @@ export default function NewQuoteScreen({ navigation, route }: any) {
                 />
               </View>
               <View style={styles.itemField}>
-                <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>P. Unit.</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('quote.unitPrice')}</Text>
                 <TextInput
                   style={[styles.fieldInput, { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border }]}
                   keyboardType="numeric"
@@ -192,7 +204,7 @@ export default function NewQuoteScreen({ navigation, route }: any) {
                 />
               </View>
               <View style={styles.itemField}>
-                <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Total</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{t('quote.itemTotal')}</Text>
                 <Text style={[styles.fieldTotal, { color: colors.text }]}>
                   ${item.total.toLocaleString('es-AR')}
                 </Text>
@@ -203,16 +215,16 @@ export default function NewQuoteScreen({ navigation, route }: any) {
 
         <TouchableOpacity style={[styles.addItemBtn, { borderColor: colors.accent }]} onPress={addItem}>
           <Ionicons name="add-circle-outline" size={18} color={colors.accent} />
-          <Text style={[styles.addItemText, { color: colors.accent }]}>Agregar item</Text>
+          <Text style={[styles.addItemText, { color: colors.accent }]}>{t('quote.addItem')}</Text>
         </TouchableOpacity>
 
         <View style={[styles.summaryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Subtotal</Text>
+            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('quote.subtotal')}</Text>
             <Text style={[styles.summaryValue, { color: colors.text }]}>{formatCurrency(subtotal)}</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>IVA (%)</Text>
+            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{t('quote.tax')} (%)</Text>
             <View style={styles.taxInput}>
               <TextInput
                 style={[styles.taxField, { backgroundColor: colors.inputBackground, color: colors.text, borderColor: colors.border }]}
@@ -226,30 +238,30 @@ export default function NewQuoteScreen({ navigation, route }: any) {
             </Text>
           </View>
           <View style={[styles.totalRow, { borderTopColor: colors.divider }]}>
-            <Text style={[styles.totalLabel, { color: colors.text }]}>TOTAL</Text>
+            <Text style={[styles.totalLabel, { color: colors.text }]}>{t('quote.total')}</Text>
             <Text style={[styles.totalValue, { color: colors.accent }]}>{formatCurrency(total)}</Text>
           </View>
         </View>
 
         <Input
-          label="Notas adicionales"
-          placeholder="Condiciones, garantía, etc."
+          label={t('quote.notes')}
+          placeholder={t('quote.notesPlaceholder')}
           multiline
           numberOfLines={3}
           value={notes}
           onChangeText={setNotes}
         />
 
-        <Button title="Generar PDF" onPress={handleCreatePDF} loading={loading} style={{ marginBottom: Spacing.md }} />
+        <Button title={t('quote.generatePdf')} onPress={handleCreatePDF} loading={loading} style={{ marginBottom: Spacing.md }} />
 
         <Button
-          title="Enviar por WhatsApp"
+          title={t('quote.sendWhatsapp')}
           variant="outline"
           onPress={handleSendWhatsApp}
           style={{ marginBottom: Spacing.huge }}
         />
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }
 

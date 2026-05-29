@@ -10,7 +10,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { StatCard, Badge } from '../components';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { api } from '../services/api';
 import { DashboardStats, Ticket } from '../types';
 import { useAppStore } from '../store';
@@ -18,6 +20,7 @@ import { formatDate } from '../utils';
 
 export default function DashboardScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t, locale } = useTranslation();
   const user = useAppStore((s) => s.user);
   const [stats, setStats] = useState<DashboardStats>({
     open_tickets: 0, today_jobs: 0, monthly_earnings: 245000,
@@ -48,20 +51,21 @@ export default function DashboardScreen({ navigation }: any) {
   const onRefresh = () => { setRefreshing(true); loadData(); };
 
   const quickActions = [
-    { icon: 'add-circle-outline' as const, label: 'Nuevo ticket', color: colors.accent, screen: 'NewTicket' },
-    { icon: 'people-outline' as const, label: 'Nuevo cliente', color: colors.success, screen: 'NewClient' },
-    { icon: 'document-text-outline' as const, label: 'Presupuesto', color: colors.warning, screen: 'NewQuote' },
-    { icon: 'map-outline' as const, label: 'Mapa', color: colors.error, screen: 'Map' },
+    { icon: 'add-circle-outline' as const, label: t('dashboard.newTicket'), color: colors.accent, screen: 'NewTicket' },
+    { icon: 'people-outline' as const, label: t('dashboard.newClient'), color: colors.success, screen: 'NewClient' },
+    { icon: 'document-text-outline' as const, label: t('dashboard.newQuote'), color: colors.warning, screen: 'NewQuote' },
+    { icon: 'map-outline' as const, label: t('dashboard.map'), color: colors.error, screen: 'Map' },
   ];
 
   const statusMap: Record<string, { label: string; variant: 'warning' | 'info' | 'success' | 'error' }> = {
-    pending: { label: 'Pendiente', variant: 'warning' },
-    in_progress: { label: 'En proceso', variant: 'info' },
-    completed: { label: 'Completado', variant: 'success' },
-    cancelled: { label: 'Cancelado', variant: 'error' },
+    pending: { label: t('ticket.pending'), variant: 'warning' },
+    in_progress: { label: t('ticket.inProgress'), variant: 'info' },
+    completed: { label: t('ticket.completed'), variant: 'success' },
+    cancelled: { label: t('ticket.cancelled'), variant: 'error' },
   };
 
   return (
+    <ScreenWrapper>
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
@@ -70,9 +74,9 @@ export default function DashboardScreen({ navigation }: any) {
     >
       <View style={styles.header}>
         <View>
-          <Text style={[styles.greeting, { color: colors.text }]}>¡Hola! {user?.name?.split(' ')[0] || ''}</Text>
+          <Text style={[styles.greeting, { color: colors.text }]}>{t('dashboard.greeting')}{user?.name?.split(' ')[0] || ''}</Text>
           <Text style={[styles.date, { color: colors.textSecondary }]}>
-            {new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
+            {new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </Text>
         </View>
         <TouchableOpacity style={styles.profileButton} onPress={() => navigation.navigate('Profile')}>
@@ -82,7 +86,7 @@ export default function DashboardScreen({ navigation }: any) {
 
       <View style={styles.quickActions}>
         {quickActions.map((action, index) => (
-          <TouchableOpacity key={index} style={styles.actionButton} onPress={() => navigation.navigate(action.screen)}>
+          <TouchableOpacity key={index} style={styles.actionButton} onPress={() => navigation.navigate(action.screen === 'Map' ? 'Main' : action.screen, action.screen === 'Map' ? { screen: 'Map' } : undefined)}>
             <View style={[styles.actionIcon, { backgroundColor: `${action.color}15` }]}>
               <Ionicons name={action.icon} size={22} color={action.color} />
             </View>
@@ -92,21 +96,21 @@ export default function DashboardScreen({ navigation }: any) {
       </View>
 
       <View style={styles.statsGrid}>
-        <StatCard title="Tickets abiertos" value={stats.open_tickets} icon="git-branch-outline" color={colors.warning} loading={loading} />
-        <StatCard title="Trabajos hoy" value={stats.today_jobs} icon="calendar-outline" color={colors.accent} loading={loading} />
-        <StatCard title="Clientes" value={stats.recent_clients} icon="people-outline" color={colors.success} loading={loading} />
-        <StatCard title="Completados" value={`${stats.completion_rate}%`} icon="checkmark-circle-outline" color={colors.info} loading={loading} />
+        <StatCard title={t('dashboard.openTickets')} value={stats.open_tickets} icon="git-branch-outline" color={colors.warning} loading={loading} index={0} />
+        <StatCard title={t('dashboard.todayJobs')} value={stats.today_jobs} icon="calendar-outline" color={colors.accent} loading={loading} index={1} />
+        <StatCard title={t('dashboard.clients')} value={stats.recent_clients} icon="people-outline" color={colors.success} loading={loading} index={2} />
+        <StatCard title={t('dashboard.completed')} value={`${stats.completion_rate}%`} icon="checkmark-circle-outline" color={colors.info} loading={loading} index={3} />
       </View>
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Tickets recientes</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Tickets')}>
-            <Text style={[styles.seeAll, { color: colors.accent }]}>Ver todo</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('dashboard.recentTickets')}</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Main', { screen: 'Tickets' })}>
+            <Text style={[styles.seeAll, { color: colors.accent }]}>{t('dashboard.seeAll')}</Text>
           </TouchableOpacity>
         </View>
         {recentTickets.length === 0 && !loading && (
-          <Text style={[styles.emptyText, { color: colors.textTertiary }]}>Sin tickets recientes</Text>
+          <Text style={[styles.emptyText, { color: colors.textTertiary }]}>{t('common.empty')}</Text>
         )}
         {recentTickets.map((ticket) => {
           const st = statusMap[ticket.status] || statusMap.pending;
@@ -116,7 +120,7 @@ export default function DashboardScreen({ navigation }: any) {
               <View style={styles.ticketLeft}>
                 <Badge label={st.label} variant={st.variant} />
                 <Text style={[styles.ticketTitle, { color: colors.text }]} numberOfLines={1}>{ticket.title}</Text>
-                {ticket.client_name && <Text style={[styles.ticketClient, { color: colors.textSecondary }]}>Cliente: {ticket.client_name}</Text>}
+                {ticket.client_name && <Text style={[styles.ticketClient, { color: colors.textSecondary }]}>{t('ticket.clientPrefix')}{ticket.client_name}</Text>}
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
             </TouchableOpacity>
@@ -126,9 +130,9 @@ export default function DashboardScreen({ navigation }: any) {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Próximos trabajos</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Tickets')}>
-            <Text style={[styles.seeAll, { color: colors.accent }]}>Ver todo</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('dashboard.upcomingJobs')}</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Main', { screen: 'Tickets' })}>
+            <Text style={[styles.seeAll, { color: colors.accent }]}>{t('dashboard.seeAll')}</Text>
           </TouchableOpacity>
         </View>
         <View style={[styles.scheduleCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -138,7 +142,7 @@ export default function DashboardScreen({ navigation }: any) {
               onPress={() => navigation.navigate('TicketDetail', { ticket })}>
               <View style={styles.scheduleTime}>
                 <Text style={[styles.scheduleTimeText, { color: colors.text }]}>
-                  {ticket.scheduled_date ? formatDate(ticket.scheduled_date, 'short') : 'Hoy'}
+                  {ticket.scheduled_date ? formatDate(ticket.scheduled_date, 'short') : t('dashboard.today')}
                 </Text>
                 <View style={[styles.scheduleDot, { backgroundColor: ticket.priority === 'urgent' ? colors.error : ticket.priority === 'high' ? colors.warning : colors.accent }]} />
               </View>
@@ -149,13 +153,14 @@ export default function DashboardScreen({ navigation }: any) {
             </TouchableOpacity>
           ))}
           {recentTickets.filter(t => t.status === 'pending' || t.status === 'in_progress').length === 0 && (
-            <Text style={[styles.emptyText, { color: colors.textTertiary, paddingVertical: Spacing.xl }]}>Sin trabajos pendientes</Text>
+            <Text style={[styles.emptyText, { color: colors.textTertiary, paddingVertical: Spacing.xl }]}>{t('common.empty')}</Text>
           )}
         </View>
       </View>
 
       <View style={{ height: 40 }} />
     </ScrollView>
+    </ScreenWrapper>
   );
 }
 

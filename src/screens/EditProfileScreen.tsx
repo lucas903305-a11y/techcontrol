@@ -10,21 +10,25 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { Colors } from '../theme/colors';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Input, Button } from '../components';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store';
+import { api } from '../services/api';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 export default function EditProfileScreen({ navigation }: any) {
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const user = useAppStore((s) => s.user);
   const setUser = useAppStore((s) => s.setUser);
+  const showToast = useAppStore((s) => s.showToast);
 
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [company, setCompany] = useState(user?.company_name || '');
-  const [photoUri, setPhotoUri] = useState<string | null>(user?.photo_url || null);
+  const [photoUri, setPhotoUri] = useState<string | undefined>(user?.photo_url);
 
   const handlePickPhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -40,22 +44,23 @@ export default function EditProfileScreen({ navigation }: any) {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Error', 'El nombre es obligatorio');
+      Alert.alert(t('common.error'), t('editProfile.nameRequired'));
       return;
     }
-    setUser({ ...user, name, phone, company_name: company, photo_url: photoUri } as any);
-    Alert.alert('Guardado', 'Perfil actualizado correctamente', [
-      { text: 'OK', onPress: () => navigation.goBack() },
-    ]);
+    const updates = { name, phone, company_name: company, photo_url: photoUri };
+    setUser({ ...user, ...updates } as any);
+    await api.updateProfile(updates).catch(() => {});
+    showToast(t('editProfile.profileUpdated'), 'success');
+    navigation.goBack();
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Editar perfil</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.myProfile')}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -73,16 +78,16 @@ export default function EditProfileScreen({ navigation }: any) {
               <Ionicons name="camera" size={14} color="#FFF" />
             </View>
           </TouchableOpacity>
-          <Text style={[styles.photoHint, { color: colors.textSecondary }]}>Tocá para cambiar foto</Text>
+          <Text style={[styles.photoHint, { color: colors.textSecondary }]}>{t('editProfile.tapToChangePhoto')}</Text>
         </View>
 
-        <Input label="Nombre completo" placeholder="Tu nombre" value={name} onChangeText={setName} />
-        <Input label="Teléfono" placeholder="+54 11 2345-6789" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
-        <Input label="Empresa" placeholder="Nombre de tu empresa" value={company} onChangeText={setCompany} />
+        <Input label={t('auth.name')} placeholder={t('editProfile.yourName')} value={name} onChangeText={setName} />
+        <Input label={t('auth.phone')} placeholder="+54 11 2345-6789" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+        <Input label={t('editProfile.company')} placeholder={t('editProfile.companyName')} value={company} onChangeText={setCompany} />
 
-        <Button title="Guardar cambios" onPress={handleSave} style={{ marginTop: Spacing.xl }} />
+        <Button title={t('common.save')} onPress={handleSave} style={{ marginTop: Spacing.xl }} />
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }
 

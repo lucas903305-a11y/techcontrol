@@ -10,12 +10,18 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
+import { useTranslation } from '../hooks/useTranslation';
 import { useTheme } from '../hooks/useTheme';
+import { useAppStore } from '../store';
 import { api } from '../services/api';
 import { Ticket } from '../types';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 export default function ReportsScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t, locale } = useTranslation();
+  const showToast = useAppStore((s) => s.showToast);
+  const user = useAppStore((s) => s.user);
   const [stats, setStats] = useState<any>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,21 +46,21 @@ export default function ReportsScreen({ navigation }: any) {
   const resolvedRate = tickets.length > 0 ? Math.round((resolved / tickets.length) * 100) : 0;
 
   const reportTypes = [
-    { icon: 'checkmark-done-outline', label: 'Tickets resueltos', color: colors.accent, desc: `${resolved} de ${tickets.length} (${resolvedRate}%)` },
-    { icon: 'git-branch-outline', label: 'Pendientes', color: colors.warning, desc: `${pending} sin asignar` },
-    { icon: 'time-outline', label: 'En progreso', color: colors.info, desc: `${inProgress} en curso` },
-    { icon: 'calendar-outline', label: 'Historial mensual', color: '#8B5CF6', desc: 'Comparativa mensual' },
-    { icon: 'people-outline', label: 'Clientes activos', color: colors.success, desc: `${stats?.recent_clients || 0} registrados` },
-    { icon: 'trending-up-outline', label: 'Exportar datos', color: colors.error, desc: 'Excel o PDF' },
+    { icon: 'checkmark-done-outline', label: t('reports.resolvedTickets'), color: colors.accent, desc: `${resolved} ${t('reports.of')} ${tickets.length} (${resolvedRate}%)`, action: () => showToast(`${resolved} ${t('reports.ticketsCompleted')}`, 'success') },
+    { icon: 'git-branch-outline', label: t('reports.pendingLabel'), color: colors.warning, desc: `${pending} ${t('reports.unassigned')}`, action: () => showToast(`${pending} ${t('reports.ticketsPendingToast')}`, 'info') },
+    { icon: 'time-outline', label: t('reports.inProgressLabel'), color: colors.info, desc: `${inProgress} ${t('reports.inCourse')}`, action: () => showToast(`${inProgress} ${t('reports.inProgressToast')}`, 'info') },
+    { icon: 'calendar-outline', label: t('reports.monthlyHistory'), color: '#8B5CF6', desc: t('reports.monthlyComparison'), action: () => showToast(t('reports.monthlyHistoryComing'), 'info') },
+    { icon: 'people-outline', label: t('reports.activeClients'), color: colors.success, desc: `${stats?.recent_clients || 0} ${t('reports.registered')}`, action: () => showToast(`${stats?.recent_clients || 0} ${t('reports.activeClientsToast')}`, 'success') },
+    { icon: 'trending-up-outline', label: t('reports.export'), color: colors.error, desc: t('reports.excelOrPdf'), action: () => showToast(t('reports.exportComing'), 'info') },
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Reportes</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('reports.title')}</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -65,12 +71,12 @@ export default function ReportsScreen({ navigation }: any) {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadData(true)} tintColor={colors.accent} />}
         >
           <View style={[styles.summaryCard, { backgroundColor: colors.primary }]}>
-            <Text style={[styles.summaryLabel, { color: '#94A3B8' }]}>Ganancias del mes</Text>
-            <Text style={styles.summaryValue}>$ {stats?.monthly_earnings?.toLocaleString('es-AR') || '0'}</Text>
+            <Text style={[styles.summaryLabel, { color: '#94A3B8' }]}>{t('reports.monthlyEarnings')}</Text>
+            <Text style={styles.summaryValue}>$ {stats?.monthly_earnings?.toLocaleString(locale === 'en' ? 'en-US' : 'es-AR') || '0'}</Text>
             <View style={styles.summaryRow}>
               <Ionicons name="trending-up" size={16} color={colors.success} />
               <Text style={[styles.summaryChange, { color: colors.success }]}>
-                {resolvedRate}% completado
+                {resolvedRate}{t('reports.completedRate')}
               </Text>
             </View>
           </View>
@@ -78,20 +84,20 @@ export default function ReportsScreen({ navigation }: any) {
           <View style={styles.statsRow}>
             <View style={[styles.statBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.statValue, { color: colors.warning }]}>{stats?.open_tickets || 0}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Abiertos</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('reports.open')}</Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.statValue, { color: colors.accent }]}>{stats?.today_jobs || 0}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Hoy</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('reports.today')}</Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={[styles.statValue, { color: colors.success }]}>{stats?.recent_clients || 0}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Clientes</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('reports.clientsStat')}</Text>
             </View>
           </View>
 
           {reportTypes.map((report, index) => (
-            <TouchableOpacity key={index} style={[styles.reportCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <TouchableOpacity key={index} style={[styles.reportCard, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={report.action}>
               <View style={[styles.reportIcon, { backgroundColor: `${report.color}15` }]}>
                 <Ionicons name={report.icon as any} size={22} color={report.color} />
               </View>
@@ -104,7 +110,7 @@ export default function ReportsScreen({ navigation }: any) {
           ))}
         </ScrollView>
       )}
-    </View>
+    </ScreenWrapper>
   );
 }
 

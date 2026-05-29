@@ -12,12 +12,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Input, Button } from '../components';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { openWhatsApp } from '../utils';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 import { api } from '../services/api';
 import { Client } from '../types';
 
 export default function ClientsScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -77,12 +80,12 @@ export default function ClientsScreen({ navigation }: any) {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Clientes</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('client.title')}</Text>
         <TouchableOpacity onPress={() => navigation.navigate('NewClient')}>
           <Ionicons name="add-circle" size={28} color={colors.accent} />
         </TouchableOpacity>
@@ -90,7 +93,7 @@ export default function ClientsScreen({ navigation }: any) {
 
       <View style={styles.searchContainer}>
         <Ionicons name="search-outline" size={18} color={colors.textSecondary} style={styles.searchIcon} />
-        <Input placeholder="Buscar cliente..." value={search} onChangeText={setSearch} containerStyle={styles.searchInput} />
+        <Input placeholder={t('common.search')} value={search} onChangeText={setSearch} containerStyle={styles.searchInput} />
       </View>
 
       <FlatList
@@ -104,13 +107,13 @@ export default function ClientsScreen({ navigation }: any) {
           <View style={styles.empty}>
             <Ionicons name="people-outline" size={48} color={colors.textTertiary} />
             <Text style={[styles.emptyText, { color: colors.textTertiary }]}>
-              {search ? 'Sin resultados para esta búsqueda' : 'No hay clientes aún'}
+              {search ? t('common.empty') : t('client.noClients')}
             </Text>
-            {!search && <Button title="Agregar cliente" onPress={() => navigation.navigate('NewClient')} />}
+            {!search && <Button title={t('client.new')} onPress={() => navigation.navigate('NewClient')} />}
           </View>
         }
       />
-    </View>
+    </ScreenWrapper>
   );
 }
 

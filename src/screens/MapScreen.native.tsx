@@ -12,6 +12,8 @@ import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 import { api } from '../services/api';
 import { Client } from '../types';
 
@@ -29,6 +31,7 @@ function getDistance(lat1: number, lng1: number, lat2: number, lng2: number): nu
 
 export default function MapScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const mapRef = useRef<MapView>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
@@ -66,12 +69,12 @@ export default function MapScreen({ navigation }: any) {
   const clientsWithCoords = clients.filter((c) => c.lat && c.lng);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Mapa de clientes</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('map.title')}</Text>
         <TouchableOpacity onPress={recenter}>
           <Ionicons name="locate-outline" size={24} color={colors.accent} />
         </TouchableOpacity>
@@ -80,7 +83,7 @@ export default function MapScreen({ navigation }: any) {
       {locationLoading ? (
         <View style={[styles.map, styles.loadingOverlay]}>
           <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Obteniendo ubicación...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>{t('common.loading')}</Text>
         </View>
       ) : (
         <MapView
@@ -111,19 +114,19 @@ export default function MapScreen({ navigation }: any) {
       {locationError && (
         <View style={[styles.locationBanner, { backgroundColor: colors.warning + '20' }]}>
           <Ionicons name="alert-circle-outline" size={16} color={colors.warning} />
-          <Text style={[styles.locationBannerText, { color: colors.warning }]}>Ubicación no disponible. Mostrando posición aproximada.</Text>
+          <Text style={[styles.locationBannerText, { color: colors.warning }]}>{t('map.locationUnavailableDetailed')}</Text>
         </View>
       )}
 
       <View style={[styles.bottomSheet, { backgroundColor: colors.surface }]}>
         <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
         <Text style={[styles.sheetTitle, { color: colors.text }]}>
-          Clientes {clientsWithCoords.length > 0 ? `(${clientsWithCoords.length})` : ''}
+          {t('map.nearby')} {clientsWithCoords.length > 0 ? `(${clientsWithCoords.length})` : ''}
         </Text>
         {clientsWithCoords.length === 0 ? (
           <View style={styles.emptySheet}>
             <Ionicons name="map-outline" size={32} color={colors.textTertiary} />
-            <Text style={[styles.emptySheetText, { color: colors.textTertiary }]}>Agregá clientes con dirección para verlos en el mapa</Text>
+            <Text style={[styles.emptySheetText, { color: colors.textTertiary }]}>{t('map.addClientsToSeeOnMap')}</Text>
           </View>
         ) : (
           clientsWithCoords.map((client, i) => {
@@ -148,7 +151,7 @@ export default function MapScreen({ navigation }: any) {
           })
         )}
       </View>
-    </View>
+    </ScreenWrapper>
   );
 }
 

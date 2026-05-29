@@ -11,11 +11,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing } from '../theme/spacing';
 import { Input, Button } from '../components';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { authService } from '../services/auth';
 
 export default function RegisterScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -24,7 +27,7 @@ export default function RegisterScreen({ navigation }: any) {
 
   const handleRegister = async () => {
     if (!name || !email || !password) {
-      Alert.alert('Error', 'Completá todos los campos obligatorios');
+      Alert.alert(t('common.error'), t('errors.required'));
       return;
     }
     setLoading(true);
@@ -32,13 +35,14 @@ export default function RegisterScreen({ navigation }: any) {
       await authService.signUp(email, password, name);
       navigation.replace('Main');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Error al registrarse');
+      Alert.alert(t('common.error'), error.message || t('errors.genericError'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
+    <ScreenWrapper>
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -56,25 +60,26 @@ export default function RegisterScreen({ navigation }: any) {
           </Text>
         </View>
 
-        <Text style={[styles.welcome, { color: colors.text }]}>Crear cuenta</Text>
+        <Text style={[styles.welcome, { color: colors.text }]}>{t('auth.createAccount')}</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Registrate como técnico profesional
+          {t('auth.createAccountSubtitle')}
         </Text>
 
         <View style={styles.form}>
-          <Input label="Nombre completo" placeholder="Juan Pérez" value={name} onChangeText={setName} />
-          <Input label="Email" placeholder="tu@email.com" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
-          <Input label="Teléfono (WhatsApp)" placeholder="+54 11 2345-6789" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
-          <Input label="Contraseña" placeholder="Mínimo 8 caracteres" secureTextEntry value={password} onChangeText={setPassword} />
-          <Button title="Crear cuenta" onPress={handleRegister} loading={loading} style={styles.registerButton} />
+          <Input label={t('auth.name')} placeholder="Juan Pérez" value={name} onChangeText={setName} />
+          <Input label={t('auth.email')} placeholder="tu@email.com" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+          <Input label={t('auth.phone')} placeholder="+54 11 2345-6789" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+          <Input label={t('auth.password')} placeholder={t('auth.passwordHint')} secureTextEntry value={password} onChangeText={setPassword} />
+          <Button title={t('auth.register')} onPress={handleRegister} loading={loading} style={styles.registerButton} />
         </View>
 
         <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: colors.textSecondary }]}>¿Ya tenés cuenta? </Text>
-          <Button title="Iniciar sesión" variant="ghost" size="sm" onPress={() => navigation.goBack()} />
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>{t('auth.hasAccount')} </Text>
+          <Button title={t('auth.login')} variant="ghost" size="sm" onPress={() => navigation.goBack()} />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </ScreenWrapper>
   );
 }
 

@@ -14,17 +14,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Badge } from '../components';
 import { useTheme } from '../hooks/useTheme';
-import { formatDate, getStatusColor, getStatusLabel, getPriorityColor } from '../utils';
+import { useTranslation } from '../hooks/useTranslation';
+import { ScreenWrapper } from '../components/ScreenWrapper';
+import { formatDate, getStatusColor, getStatusLabel, getPriorityColor, openWhatsApp } from '../utils';
 import { api } from '../services/api';
 import { useAppStore } from '../store';
 import { Ticket, TicketComment } from '../types';
-
-const statusOptions = [
-  { key: 'pending', label: 'Pendiente', icon: 'time-outline' },
-  { key: 'in_progress', label: 'En proceso', icon: 'construct-outline' },
-  { key: 'completed', label: 'Completado', icon: 'checkmark-circle-outline' },
-  { key: 'cancelled', label: 'Cancelado', icon: 'close-circle-outline' },
-];
 
 export default function TicketDetailScreen({ navigation, route }: any) {
   const { colors, isDark } = useTheme();
@@ -34,7 +29,15 @@ export default function TicketDetailScreen({ navigation, route }: any) {
   const [comments, setComments] = useState<TicketComment[]>(ticket.comments || []);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
 
+  const { t, locale } = useTranslation();
   const showToast = useAppStore((s) => s.showToast);
+
+  const statusOptions = [
+    { key: 'pending', label: t('ticket.pending'), icon: 'time-outline' },
+    { key: 'in_progress', label: t('ticket.inProgress'), icon: 'construct-outline' },
+    { key: 'completed', label: t('ticket.completed'), icon: 'checkmark-circle-outline' },
+    { key: 'cancelled', label: t('ticket.cancelled'), icon: 'close-circle-outline' },
+  ];
 
   const handleStatusChange = async (status: string) => {
     setCurrentStatus(status as Ticket['status']);
@@ -44,9 +47,9 @@ export default function TicketDetailScreen({ navigation, route }: any) {
         status: status as Ticket['status'],
         completed_at: status === 'completed' ? new Date().toISOString() : undefined,
       });
-      showToast(`Ticket ${getStatusLabel(status).toLowerCase()}`, 'success');
+      showToast(t('ticket.statusUpdated') + ' ' + getStatusLabel(status).toLowerCase(), 'success');
     } catch {
-      showToast('Error al actualizar estado', 'error');
+      showToast(t('common.error'), 'error');
     }
   };
 
@@ -65,39 +68,44 @@ export default function TicketDetailScreen({ navigation, route }: any) {
 
   const handleShare = () => {
     Share.share({
-      message: `Ticket: ${ticket.title}\nEstado: ${getStatusLabel(currentStatus)}\nCliente: ${ticket.client_name || 'N/A'}\nCreado: ${formatDate(ticket.created_at)}`,
+      message: `${t('ticket.shareTitle')}: ${ticket.title}\n${t('ticket.shareStatus')}: ${getStatusLabel(currentStatus)}\n${t('ticket.shareClient')}: ${ticket.client_name || 'N/A'}\n${t('ticket.shareDate')}: ${formatDate(ticket.created_at)}`,
     });
   };
 
-  const handleWhatsApp = () => {
-    const message = `TechControl - Ticket: ${ticket.title}\nEstado: ${getStatusLabel(currentStatus)}`;
-    const phone = ''; // would need client phone
-    if (phone) {
-      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    } else {
-      Alert.alert('WhatsApp', 'No hay número de cliente disponible');
+  const handleWhatsApp = async () => {
+    const message = `${t('ticket.whatsappHeader')} ${ticket.title}\n${t('ticket.shareStatus')}: ${getStatusLabel(currentStatus)}`;
+    try {
+      const clients = await api.getClients();
+      const client = clients.find((c: any) => c.id === ticket.client_id);
+      if (client?.phone) {
+        openWhatsApp(client.phone, message);
+      } else {
+        Alert.alert(t('common.whatsapp'), t('ticket.noClientPhone'));
+      }
+    } catch {
+      Alert.alert(t('common.whatsapp'), t('ticket.cannotGetClient'));
     }
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Detalle del ticket</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('ticket.detail')}</Text>
         <View style={{ flexDirection: 'row', gap: Spacing.md }}>
           <TouchableOpacity onPress={() => navigation.navigate('NewTicket', { ticket })}>
             <Ionicons name="pencil-outline" size={22} color={colors.accent} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => Alert.alert(
-            'Eliminar ticket',
-            '¿Eliminar este ticket?',
+            t('common.delete'),
+            t('common.confirm'),
             [
-              { text: 'Cancelar', style: 'cancel' },
-              { text: 'Eliminar', style: 'destructive', onPress: async () => {
-                try { await api.updateTicket(ticket.id, { status: 'cancelled' as any }); navigation.goBack(); }
-                catch { Alert.alert('Error', 'No se pudo eliminar el ticket'); }
+              { text: t('common.cancel'), style: 'cancel' },
+              { text: t('common.delete'), style: 'destructive', onPress: async () => {
+                try { await api.deleteTicket(ticket.id); navigation.goBack(); }
+                catch { Alert.alert(t('common.error'), t('common.error')); }
               }},
             ]
           )}>
@@ -117,7 +125,7 @@ export default function TicketDetailScreen({ navigation, route }: any) {
             onPress={() => setShowStatusMenu(!showStatusMenu)}
           >
             <Ionicons name="swap-horizontal-outline" size={16} color={colors.accent} />
-            <Text style={[styles.changeStatusText, { color: colors.accent }]}>Cambiar</Text>
+            <Text style={[styles.changeStatusText, { color: colors.accent }]}>{t('ticket.changeStatus')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -148,23 +156,23 @@ export default function TicketDetailScreen({ navigation, route }: any) {
           <View style={styles.metaGrid}>
             <View style={styles.metaItem}>
               <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
-              <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Cliente:</Text>
-              <Text style={[styles.metaValue, { color: colors.text }]}>{ticket.client_name || 'Sin asignar'}</Text>
+              <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('client.name')}:</Text>
+              <Text style={[styles.metaValue, { color: colors.text }]}>{ticket.client_name || t('ticket.unassigned')}</Text>
             </View>
             <View style={styles.metaItem}>
               <Ionicons name="flag-outline" size={14} color={getPriorityColor(ticket.priority)} />
-              <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Prioridad:</Text>
+              <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('ticket.priority')}:</Text>
               <Text style={[styles.metaValue, { color: getPriorityColor(ticket.priority) }]}>{ticket.priority}</Text>
             </View>
             <View style={styles.metaItem}>
               <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
-              <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Creado:</Text>
+              <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('ticket.createdLabel')}</Text>
               <Text style={[styles.metaValue, { color: colors.text }]}>{formatDate(ticket.created_at, 'long')}</Text>
             </View>
             {ticket.scheduled_date && (
               <View style={styles.metaItem}>
                 <Ionicons name="calendar-outline" size={14} color={colors.accent} />
-                <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Programado:</Text>
+                <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('ticket.scheduledLabel')}</Text>
                 <Text style={[styles.metaValue, { color: colors.accent }]}>{formatDate(ticket.scheduled_date, 'long')}</Text>
               </View>
             )}
@@ -173,7 +181,7 @@ export default function TicketDetailScreen({ navigation, route }: any) {
 
         {ticket.images && ticket.images.length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Adjuntos</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('ticket.attachments')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.attachmentRow}>
               {ticket.images.map((img, i) => (
                 <View key={i}>
@@ -186,20 +194,20 @@ export default function TicketDetailScreen({ navigation, route }: any) {
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Comentarios ({comments.length})
+            {t('ticket.commentsLabel')} ({comments.length})
           </Text>
 
           {comments.length === 0 && (
             <View style={[styles.emptyComments, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Ionicons name="chatbubbles-outline" size={32} color={colors.textTertiary} />
-              <Text style={[styles.emptyText, { color: colors.textTertiary }]}>Sin comentarios aún</Text>
+              <Text style={[styles.emptyText, { color: colors.textTertiary }]}>{t('ticket.noComments')}</Text>
             </View>
           )}
 
           {comments.map((c) => (
             <View key={c.id} style={[styles.commentBubble, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View style={styles.commentHeader}>
-                <Text style={[styles.commentAuthor, { color: colors.accent }]}>Técnico</Text>
+                <Text style={[styles.commentAuthor, { color: colors.accent }]}>{t('ticket.technician')}</Text>
                 <Text style={[styles.commentTime, { color: colors.textTertiary }]}>{formatDate(c.created_at, 'relative')}</Text>
               </View>
               <Text style={[styles.commentText, { color: colors.text }]}>{c.text}</Text>
@@ -211,7 +219,7 @@ export default function TicketDetailScreen({ navigation, route }: any) {
       <View style={[styles.inputBar, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
         <TextInput
           style={[styles.commentInput, { backgroundColor: colors.inputBackground, color: colors.text }]}
-          placeholder="Agregar comentario..."
+          placeholder={t('ticket.addComment')}
           placeholderTextColor={colors.textTertiary}
           value={comment}
           onChangeText={setComment}
@@ -225,7 +233,7 @@ export default function TicketDetailScreen({ navigation, route }: any) {
           <Ionicons name="send" size={18} color="#FFF" />
         </TouchableOpacity>
       </View>
-    </View>
+    </ScreenWrapper>
   );
 }
 

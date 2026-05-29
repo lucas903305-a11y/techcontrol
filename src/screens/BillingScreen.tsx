@@ -1,46 +1,61 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
+import { useAppStore } from '../store';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 export default function BillingScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const showToast = useAppStore((s) => s.showToast);
+
+  const [currentPlan, setCurrentPlan] = useState('Pro');
 
   const plans = [
-    { name: 'Free', price: '$0', desc: 'Hasta 10 clientes', current: false },
-    { name: 'Pro', price: '$9.99/mes', desc: 'Clientes ilimitados + IA', current: true, popular: true },
-    { name: 'Enterprise', price: '$29.99/mes', desc: 'Todo + equipo multi-técnico', current: false },
+    { name: 'Free', price: '$0', desc: t('billing.freeDesc'), current: currentPlan === 'Free' },
+    { name: 'Pro', price: '$9.99/mes', desc: t('billing.proDesc'), current: currentPlan === 'Pro', popular: true },
+    { name: 'Enterprise', price: '$29.99/mes', desc: t('billing.enterpriseDesc'), current: currentPlan === 'Enterprise' },
   ];
 
+  const handleChangePlan = (name: string) => {
+    if (name === currentPlan) return;
+    Alert.alert(t('billing.changePlanTitle'), `${t('billing.changePlanMessage')} ${name}?`, [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('billing.confirmChange'), onPress: () => { setCurrentPlan(name); showToast(`${t('billing.planActivated')} ${name}`, 'success'); }},
+    ]);
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Plan y facturación</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.billing')}</Text>
         <View style={{ width: 24 }} />
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.currentLabel, { color: colors.textSecondary }]}>Plan actual</Text>
+        <Text style={[styles.currentLabel, { color: colors.textSecondary }]}>{t('billing.currentPlan')}</Text>
         <View style={[styles.currentCard, { backgroundColor: colors.accent + '15', borderColor: colors.accent }]}>
           <View style={styles.currentRow}>
             <Text style={[styles.currentName, { color: colors.accent }]}>Pro</Text>
             <View style={[styles.badge, { backgroundColor: colors.accent }]}>
-              <Text style={styles.badgeText}>ACTIVO</Text>
+              <Text style={styles.badgeText}>{t('billing.active')}</Text>
             </View>
           </View>
           <Text style={[styles.currentPrice, { color: colors.text }]}>$9.99/mes</Text>
-          <Text style={[styles.currentDesc, { color: colors.textSecondary }]}>Clientes ilimitados, IA, reportes avanzados</Text>
+          <Text style={[styles.currentDesc, { color: colors.textSecondary }]}>{t('billing.proCurrentDesc')}</Text>
         </View>
 
-        <Text style={[styles.plansLabel, { color: colors.text }]}>Cambiar plan</Text>
+        <Text style={[styles.plansLabel, { color: colors.text }]}>{t('billing.changePlan')}</Text>
         {plans.map((plan, i) => (
           <TouchableOpacity
             key={i}
             style={[styles.planCard, { backgroundColor: colors.surface, borderColor: plan.popular ? colors.accent : colors.border }]}
-          >
+            onPress={() => handleChangePlan(plan.name)}>
             <View style={styles.planHeader}>
               <View>
                 <Text style={[styles.planName, { color: colors.text }]}>{plan.name}</Text>
@@ -50,13 +65,13 @@ export default function BillingScreen({ navigation }: any) {
             </View>
             {plan.popular && (
               <View style={[styles.popularBadge, { backgroundColor: colors.accent }]}>
-                <Text style={styles.popularText}>RECOMENDADO</Text>
+                <Text style={styles.popularText}>{t('billing.recommended')}</Text>
               </View>
             )}
           </TouchableOpacity>
         ))}
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }
 

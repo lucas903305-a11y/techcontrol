@@ -8,71 +8,78 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
+import { useTranslation } from '../hooks/useTranslation';
 import { useTheme } from '../hooks/useTheme';
+import { useAppStore } from '../store';
 import { StatCard } from '../components';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 export default function AdminScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const showToast = useAppStore((s) => s.showToast);
+
+  const menuAction = (label: string) => showToast(`${label} — próximamente`, 'info');
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Panel Admin</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('admin.title')}</Text>
         <View style={{ width: 28 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.statsGrid}>
-          <StatCard title="Usuarios totales" value="24" icon="people-outline" color={colors.accent} />
-          <StatCard title="Suscripciones Pro" value="12" icon="card-outline" color={colors.success} />
-          <StatCard title="Tickets hoy" value="8" icon="git-branch-outline" color={colors.warning} />
-          <StatCard title="Ingresos mes" value="$320K" icon="cash-outline" color={colors.info} />
+          <StatCard title={t('admin.totalUsers')} value="24" icon="people-outline" color={colors.accent} />
+          <StatCard title={t('admin.proSubscriptions')} value="12" icon="card-outline" color={colors.success} />
+          <StatCard title={t('admin.todayTickets')} value="8" icon="git-branch-outline" color={colors.warning} />
+          <StatCard title={t('admin.monthlyRevenue')} value="$320K" icon="cash-outline" color={colors.info} />
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Gestión</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('admin.management')}</Text>
           <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.divider }]}>
+            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.divider }]} onPress={() => menuAction(t('admin.users'))}>
               <Ionicons name="people-outline" size={20} color={colors.text} />
-              <Text style={[styles.menuLabel, { color: colors.text }]}>Usuarios</Text>
+              <Text style={[styles.menuLabel, { color: colors.text }]}>{t('admin.users')}</Text>
               <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.divider }]}>
+            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.divider }]} onPress={() => menuAction(t('admin.roles'))}>
               <Ionicons name="shield-checkmark-outline" size={20} color={colors.text} />
-              <Text style={[styles.menuLabel, { color: colors.text }]}>Roles y permisos</Text>
+              <Text style={[styles.menuLabel, { color: colors.text }]}>{t('admin.roles')}</Text>
               <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.divider }]}>
+            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.divider }]} onPress={() => menuAction(t('admin.globalStats'))}>
               <Ionicons name="stats-chart-outline" size={20} color={colors.text} />
-              <Text style={[styles.menuLabel, { color: colors.text }]}>Estadísticas globales</Text>
+              <Text style={[styles.menuLabel, { color: colors.text }]}>{t('admin.globalStats')}</Text>
               <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.divider }]}>
+            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.divider }]} onPress={() => menuAction(t('admin.settings'))}>
               <Ionicons name="settings-outline" size={20} color={colors.text} />
-              <Text style={[styles.menuLabel, { color: colors.text }]}>Configuración general</Text>
+              <Text style={[styles.menuLabel, { color: colors.text }]}>{t('admin.settings')}</Text>
               <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => menuAction(t('admin.subscriptions'))}>
               <Ionicons name="card-outline" size={20} color={colors.text} />
-              <Text style={[styles.menuLabel, { color: colors.text }]}>Suscripciones</Text>
+              <Text style={[styles.menuLabel, { color: colors.text }]}>{t('admin.subscriptions')}</Text>
               <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Técnicos más activos</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('admin.topTechnicians')}</Text>
           {[1, 2, 3].map((_, i) => (
             <View key={i} style={[styles.techRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View style={[styles.techAvatar, { backgroundColor: colors.accent + '20' }]}>
                 <Text style={[styles.techAvatarText, { color: colors.accent }]}>T{i + 1}</Text>
               </View>
               <View style={styles.techInfo}>
-                <Text style={[styles.techName, { color: colors.text }]}>Técnico {i + 1}</Text>
-                <Text style={[styles.techTickets, { color: colors.textSecondary }]}>{12 - i * 3} tickets resueltos</Text>
+                <Text style={[styles.techName, { color: colors.text }]}>{t('admin.technician')} {i + 1}</Text>
+                <Text style={[styles.techTickets, { color: colors.textSecondary }]}>{12 - i * 3} {t('admin.ticketsResolved')}</Text>
               </View>
               <View style={[styles.techBadge, { backgroundColor: colors.warning + '20' }]}>
                 <Text style={[styles.techBadgeText, { color: colors.warning }]}>#{i + 1}</Text>
@@ -81,7 +88,7 @@ export default function AdminScreen({ navigation }: any) {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }
 

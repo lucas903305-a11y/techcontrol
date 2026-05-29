@@ -3,9 +3,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 're
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 export default function NotificationsScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [settings, setSettings] = React.useState({
     nuevosTickets: true,
     cambiosEstado: true,
@@ -20,21 +23,21 @@ export default function NotificationsScreen({ navigation }: any) {
   };
 
   const rows = [
-    { key: 'nuevosTickets' as const, icon: 'git-branch-outline', label: 'Nuevos tickets' },
-    { key: 'cambiosEstado' as const, icon: 'swap-horizontal-outline', label: 'Cambios de estado' },
-    { key: 'recordatorios' as const, icon: 'alarm-outline', label: 'Recordatorios' },
-    { key: 'promociones' as const, icon: 'megaphone-outline', label: 'Promociones' },
-    { key: 'sonido' as const, icon: 'volume-high-outline', label: 'Sonido' },
-    { key: 'vibrar' as const, icon: 'phone-portrait-outline', label: 'Vibración' },
+    { key: 'nuevosTickets' as const, icon: 'git-branch-outline', label: t('notifications.newTickets') },
+    { key: 'cambiosEstado' as const, icon: 'swap-horizontal-outline', label: t('notifications.statusChanges') },
+    { key: 'recordatorios' as const, icon: 'alarm-outline', label: t('notifications.reminders') },
+    { key: 'promociones' as const, icon: 'megaphone-outline', label: t('notifications.promotions') },
+    { key: 'sonido' as const, icon: 'volume-high-outline', label: t('notifications.sound') },
+    { key: 'vibrar' as const, icon: 'phone-portrait-outline', label: t('notifications.vibration') },
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Notificaciones</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile.notifications')}</Text>
         <View style={{ width: 24 }} />
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -55,7 +58,7 @@ export default function NotificationsScreen({ navigation }: any) {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }
 

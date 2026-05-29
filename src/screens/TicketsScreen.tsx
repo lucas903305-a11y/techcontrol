@@ -12,22 +12,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Badge, Button, Input } from '../components';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import { api } from '../services/api';
 import { Ticket } from '../types';
 
-const statusLabels: Record<string, { label: string; variant: 'warning' | 'info' | 'success' | 'error' }> = {
-  pending: { label: 'Pendiente', variant: 'warning' },
-  in_progress: { label: 'En proceso', variant: 'info' },
-  completed: { label: 'Completado', variant: 'success' },
-  cancelled: { label: 'Cancelado', variant: 'error' },
-};
-
 export default function TicketsScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t, locale } = useTranslation();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
+
+  const statusLabels: Record<string, { label: string; variant: 'warning' | 'info' | 'success' | 'error' }> = {
+    pending: { label: t('ticket.pending'), variant: 'warning' },
+    in_progress: { label: t('ticket.inProgress'), variant: 'info' },
+    completed: { label: t('ticket.completed'), variant: 'success' },
+    cancelled: { label: t('ticket.cancelled'), variant: 'error' },
+  };
 
   const loadTickets = useCallback(async () => {
     try {
@@ -61,11 +63,11 @@ export default function TicketsScreen({ navigation }: any) {
           <View style={[styles.priorityDot, { backgroundColor: item.priority === 'low' ? colors.textSecondary : item.priority === 'medium' ? colors.warning : item.priority === 'high' ? colors.error : '#DC2626' }]} />
         </View>
         <Text style={[styles.ticketTitle, { color: colors.text }]}>{item.title}</Text>
-        {item.client_name && <Text style={[styles.ticketClient, { color: colors.textSecondary }]}>Cliente: {item.client_name}</Text>}
+        {item.client_name && <Text style={[styles.ticketClient, { color: colors.textSecondary }]}>{t('ticket.clientPrefix')}{item.client_name}</Text>}
         <View style={styles.ticketFooter}>
           <View style={styles.ticketMeta}>
             <Ionicons name="calendar-outline" size={12} color={colors.textSecondary} />
-            <Text style={[styles.metaText, { color: colors.textSecondary }]}>{new Date(item.created_at).toLocaleDateString('es-AR')}</Text>
+            <Text style={[styles.metaText, { color: colors.textSecondary }]}>{new Date(item.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-AR')}</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -73,10 +75,10 @@ export default function TicketsScreen({ navigation }: any) {
   };
 
   const filters = [
-    { key: 'all', label: 'Todas' },
-    { key: 'pending', label: 'Pendientes' },
-    { key: 'in_progress', label: 'En proceso' },
-    { key: 'completed', label: 'Completadas' },
+    { key: 'all', label: t('ticket.all') },
+    { key: 'pending', label: t('ticket.pendingFilter') },
+    { key: 'in_progress', label: t('ticket.inProgressFilter') },
+    { key: 'completed', label: t('ticket.completedFilter') },
   ];
 
   return (
@@ -85,7 +87,7 @@ export default function TicketsScreen({ navigation }: any) {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Tickets</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('ticket.title')}</Text>
         <TouchableOpacity onPress={() => navigation.navigate('NewTicket')}>
           <Ionicons name="add-circle" size={28} color={colors.accent} />
         </TouchableOpacity>
@@ -93,7 +95,7 @@ export default function TicketsScreen({ navigation }: any) {
 
       <View style={styles.searchContainer}>
         <Ionicons name="search-outline" size={18} color={colors.textSecondary} style={styles.searchIcon} />
-        <Input placeholder="Buscar ticket..." value={search} onChangeText={setSearch} containerStyle={styles.searchInput} />
+        <Input placeholder={t('ticket.searchPlaceholder')} value={search} onChangeText={setSearch} containerStyle={styles.searchInput} />
       </View>
 
       <View style={styles.filterContainer}>
@@ -119,9 +121,9 @@ export default function TicketsScreen({ navigation }: any) {
           <View style={styles.empty}>
             <Ionicons name="git-branch-outline" size={48} color={colors.textTertiary} />
             <Text style={[styles.emptyText, { color: colors.textTertiary }]}>
-              {search ? 'Sin resultados para esta búsqueda' : `No hay tickets ${filter !== 'all' ? statusLabels[filter]?.label.toLowerCase() : ''}`}
+              {search ? t('ticket.noSearchResults') : t('ticket.noTickets') + (filter !== 'all' ? ' ' + statusLabels[filter]?.label.toLowerCase() : '')}
             </Text>
-            {!search && <Button title="Crear ticket" onPress={() => navigation.navigate('NewTicket')} />}
+            {!search && <Button title={t('ticket.create')} onPress={() => navigation.navigate('NewTicket')} />}
           </View>
         }
       />

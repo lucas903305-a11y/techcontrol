@@ -88,6 +88,7 @@ export interface Quote {
   id: string;
   user_id: string;
   client_id: string;
+  client_name?: string;
   number: string;
   items: QuoteItem[];
   subtotal: number;

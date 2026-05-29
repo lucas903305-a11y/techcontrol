@@ -27,3 +27,4 @@ export { default as SecurityScreen } from './SecurityScreen';
 export { default as NewInventoryScreen } from './NewInventoryScreen';
 export { default as HelpScreen } from './HelpScreen';
 export { default as AboutScreen } from './AboutScreen';
+export { default as MapPickerScreen } from './MapPickerScreen';

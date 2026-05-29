@@ -3,36 +3,45 @@ import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'r
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing } from '../theme/spacing';
 import { Input, Button } from '../components';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
+import { useAppStore } from '../store';
+import { authService } from '../services/auth';
 
 export default function ResetPasswordScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const showToast = useAppStore((s) => s.showToast);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleReset = async () => {
-    if (!email) { Alert.alert('Error', 'Ingresá tu email'); return; }
+    if (!email) { Alert.alert(t('common.error'), t('auth.enterEmail')); return; }
     setLoading(true);
     try {
-      Alert.alert('Email enviado', 'Si el email existe, recibirás instrucciones para restablecer tu contraseña.');
+      await authService.resetPassword(email);
+      showToast(t('auth.emailSent'), 'success');
       navigation.goBack();
-    } catch { Alert.alert('Error', 'No se pudo enviar el email'); }
+    } catch { showToast(t('auth.emailSendFailed'), 'error'); }
     finally { setLoading(false); }
   };
 
   return (
+    <ScreenWrapper>
     <KeyboardAvoidingView style={[styles.container, { backgroundColor: colors.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={styles.content}>
         <View style={styles.header}>
           <Ionicons name="lock-closed-outline" size={48} color={colors.accent} />
-          <Text style={[styles.title, { color: colors.text }]}>Restablecer contraseña</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Te enviaremos un link al email registrado</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('auth.resetPassword')}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('auth.resetPasswordSubtitle')}</Text>
         </View>
-        <Input label="Email" placeholder="tu@email.com" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
-        <Button title="Enviar link" onPress={handleReset} loading={loading} />
-        <Button title="Volver" variant="ghost" onPress={() => navigation.goBack()} style={{ marginTop: Spacing.md }} />
+        <Input label={t('auth.email')} placeholder="tu@email.com" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+        <Button title={t('auth.sendLink')} onPress={handleReset} loading={loading} />
+        <Button title={t('common.back')} variant="ghost" onPress={() => navigation.goBack()} style={{ marginTop: Spacing.md }} />
       </View>
     </KeyboardAvoidingView>
+    </ScreenWrapper>
   );
 }
 

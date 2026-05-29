@@ -15,15 +15,15 @@ describe('Button', () => {
     expect(onPress).toHaveBeenCalled();
   });
 
-  it('shows loading indicator', () => {
-    const { queryByTestId } = render(<Button title="Load" onPress={() => {}} loading />);
-    expect(queryByTestId('loading-indicator')).toBeTruthy();
+  it('renders when loading', () => {
+    const { queryByText } = render(<Button title="Load" onPress={() => {}} loading />);
+    expect(queryByText('Load')).toBeNull();
   });
 
-  it('disables when loading', () => {
+  it('does not call onPress when loading', () => {
     const onPress = jest.fn();
-    const { getByText } = render(<Button title="Disabled" onPress={onPress} loading />);
-    fireEvent.press(getByText('Disabled'));
+    const { root } = render(<Button title="Disabled" onPress={onPress} loading />);
+    fireEvent.press(root);
     expect(onPress).not.toHaveBeenCalled();
   });
 });

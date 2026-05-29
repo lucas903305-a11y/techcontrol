@@ -16,23 +16,23 @@ import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Input, Button } from '../components';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../hooks/useTranslation';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 import { openWhatsApp, openMaps, formatDate, formatPhone } from '../utils';
 import { api } from '../services/api';
 import { useAppStore } from '../store';
 import { Client, Equipment, Visit } from '../types';
 
-const mockVisits: Visit[] = [
-  { id: '1', client_id: '1', user_id: '1', lat: -34.6037, lng: -58.3816, address: 'Av. Corrientes 1234', check_in: '2025-05-20T09:00:00', check_out: '2025-05-20T11:30:00', notes: 'Mantenimiento preventivo realizado' },
-  { id: '2', client_id: '1', user_id: '1', lat: -34.6037, lng: -58.3816, address: 'Av. Corrientes 1234', check_in: '2025-05-10T14:00:00', notes: 'Instalación de cámara adicional' },
-];
-
 export default function ClientDetailScreen({ navigation, route }: any) {
   const { colors, isDark } = useTheme();
+  const { t, locale } = useTranslation();
   const showToast = useAppStore((s) => s.showToast);
   const client: Client = route?.params?.client || {};
   const [showFullInfo, setShowFullInfo] = useState(false);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [loadingEquip, setLoadingEquip] = useState(true);
+  const [visits, setVisits] = useState<Visit[]>([]);
+  const [loadingVisits, setLoadingVisits] = useState(true);
   const [showAddEquip, setShowAddEquip] = useState(false);
   const [eqName, setEqName] = useState('');
   const [eqBrand, setEqBrand] = useState('');
@@ -43,13 +43,19 @@ export default function ClientDetailScreen({ navigation, route }: any) {
 
   useFocusEffect(useCallback(() => {
     (async () => {
-      try { setEquipment(await api.getEquipment(client.id)); }
-      catch {} finally { setLoadingEquip(false); }
+      try {
+        const [eqData, visitsData] = await Promise.all([
+          api.getEquipment(client.id),
+          api.getVisits(),
+        ]);
+        setEquipment(eqData);
+        setVisits(visitsData.filter((v: Visit) => v.client_id === client.id));
+      } catch {} finally { setLoadingEquip(false); setLoadingVisits(false); }
     })();
   }, [client.id]));
 
   const handleAddEquipment = async () => {
-    if (!eqName.trim()) { Alert.alert('Error', 'El nombre del equipo es obligatorio'); return; }
+    if (!eqName.trim()) { Alert.alert(t('common.error'), t('errors.required')); return; }
     setSavingEquip(true);
     try {
       const newEq = await api.createEquipment({
@@ -60,8 +66,8 @@ export default function ClientDetailScreen({ navigation, route }: any) {
       setEquipment((prev) => [...prev, newEq]);
       setEqName(''); setEqBrand(''); setEqModel(''); setEqSerial(''); setEqWarranty('');
       setShowAddEquip(false);
-      showToast('Equipo agregado', 'success');
-    } catch { showToast('Error al agregar equipo', 'error'); }
+      showToast(t('common.success'), 'success');
+    } catch { showToast(t('common.error'), 'error'); }
     finally { setSavingEquip(false); }
   };
 
@@ -85,12 +91,12 @@ export default function ClientDetailScreen({ navigation, route }: any) {
     setVisitLoading(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') { Alert.alert('Permiso requerido', 'Se necesita ubicación para registrar la visita'); return; }
+      if (status !== 'granted') { Alert.alert(t('common.error'), t('errors.required')); return; }
       const loc = await Location.getCurrentPositionAsync({});
       const visit = await api.checkIn({ client_id: client.id, user_id: client.user_id || '1', lat: loc.coords.latitude, lng: loc.coords.longitude, address: client.address || '' });
       setActiveVisit({ id: visit.id, start: new Date() });
-      showToast('Visita iniciada', 'success');
-    } catch { showToast('Error al iniciar visita', 'error'); }
+      showToast(t('common.success'), 'success');
+    } catch { showToast(t('common.error'), 'error'); }
     finally { setVisitLoading(false); }
   };
 
@@ -102,17 +108,17 @@ export default function ClientDetailScreen({ navigation, route }: any) {
       setActiveVisit(null);
       setVisitNotes('');
       setElapsed('00:00');
-      showToast('Visita finalizada', 'success');
-    } catch { showToast('Error al finalizar visita', 'error'); }
+      showToast(t('common.success'), 'success');
+    } catch { showToast(t('common.error'), 'error'); }
     finally { setVisitLoading(false); }
   };
 
   const handleDeleteEquipment = (eq: Equipment) => {
-    Alert.alert('Eliminar equipo', `¿Eliminar ${eq.name}?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => {
-        try { await api.deleteEquipment(eq.id); setEquipment((prev) => prev.filter((e) => e.id !== eq.id)); showToast('Equipo eliminado', 'success'); }
-        catch { showToast('Error al eliminar equipo', 'error'); }
+    Alert.alert(t('common.delete'), t('common.delete') + ' ' + eq.name + '?', [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: async () => {
+        try { await api.deleteEquipment(eq.id); setEquipment((prev) => prev.filter((e) => e.id !== eq.id)); showToast(t('common.success'), 'success'); }
+        catch { showToast(t('common.error'), 'error'); }
       }},
     ]);
   };
@@ -125,9 +131,9 @@ export default function ClientDetailScreen({ navigation, route }: any) {
 
   const handleWhatsApp = () => {
     if (client.phone) {
-      openWhatsApp(client.phone, `Hola ${client.name}, te escribo desde TechControl`);
+      openWhatsApp(client.phone, `${t('client.whatsappHello')} ${client.name}, ${t('client.whatsappFrom')}`);
     } else {
-      Alert.alert('Error', 'Este cliente no tiene número registrado');
+      Alert.alert(t('common.error'), t('errors.required'));
     }
   };
 
@@ -141,31 +147,31 @@ export default function ClientDetailScreen({ navigation, route }: any) {
 
   const handleShare = () => {
     Share.share({
-      message: `Cliente: ${client.name}\nTel: ${client.phone || 'N/A'}\nDir: ${client.address || 'N/A'}`,
+      message: `${t('client.shareHeader')}${client.name}\n${t('client.sharePhone')}${client.phone || 'N/A'}\n${t('client.shareAddress')}${client.address || 'N/A'}`,
     });
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Cliente</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('client.detail')}</Text>
         <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
           <TouchableOpacity onPress={() => navigation.navigate('NewClient', { client })}>
             <Ionicons name="pencil-outline" size={22} color={colors.accent} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => Alert.alert(
-            'Eliminar cliente',
-            `¿Eliminar a ${client.name}? Esta acción no se puede deshacer.`,
+            t('common.confirm'),
+            t('client.deleteConfirm') + ' ' + client.name + '? ' + t('client.deleteUndoable'),
             [
-              { text: 'Cancelar', style: 'cancel' },
-              { text: 'Eliminar', style: 'destructive', onPress: async () => {
+              { text: t('common.cancel'), style: 'cancel' },
+              { text: t('common.delete'), style: 'destructive', onPress: async () => {
                 try {
                   await api.deleteClient(client.id);
                   navigation.goBack();
-                } catch { Alert.alert('Error', 'No se pudo eliminar el cliente'); }
+                } catch { Alert.alert(t('common.error'), t('common.error')); }
               }},
             ]
           )}>
@@ -190,15 +196,15 @@ export default function ClientDetailScreen({ navigation, route }: any) {
           <View style={styles.actionRow}>
             <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.accent + '10' }]} onPress={handleCall}>
               <Ionicons name="call-outline" size={20} color={colors.accent} />
-              <Text style={[styles.actionLabel, { color: colors.accent }]}>Llamar</Text>
+              <Text style={[styles.actionLabel, { color: colors.accent }]}>{t('client.call')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#25D36615' }]} onPress={handleWhatsApp}>
               <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
-              <Text style={{ fontSize: 11, fontWeight: '500', color: '#25D366' }}>WhatsApp</Text>
+              <Text style={{ fontSize: 11, fontWeight: '500', color: '#25D366' }}>{t('client.whatsapp')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.success + '15' }]} onPress={handleOpenMaps}>
               <Ionicons name="navigate-outline" size={20} color={colors.success} />
-              <Text style={{ fontSize: 11, fontWeight: '500', color: colors.success }}>Ir</Text>
+              <Text style={{ fontSize: 11, fontWeight: '500', color: colors.success }}>{t('client.navigate')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -206,19 +212,19 @@ export default function ClientDetailScreen({ navigation, route }: any) {
         <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="information-circle-outline" size={18} color={colors.accent} />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Información</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('client.detail')}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Teléfono</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>{client.phone || 'No registrado'}</Text>
+            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('client.phone')}</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{client.phone || t('client.notRegistered')}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Email</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>{client.email || 'No registrado'}</Text>
+            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('client.email')}</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{client.email || t('client.notRegistered')}</Text>
           </View>
           <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
-            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Dirección</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>{client.address || 'No registrada'}</Text>
+            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('client.address')}</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{client.address || t('client.notRegisteredAddress')}</Text>
           </View>
           {client.notes && (
             <View style={[styles.notesBox, { backgroundColor: colors.surfaceLight }]}>
@@ -233,24 +239,24 @@ export default function ClientDetailScreen({ navigation, route }: any) {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
               <Ionicons name="time-outline" size={24} color={colors.success} />
               <View>
-                <Text style={[styles.visitBannerTitle, { color: colors.success }]}>Visita en curso</Text>
+                <Text style={[styles.visitBannerTitle, { color: colors.success }]}>{t('client.visits')}</Text>
                 <Text style={[styles.visitBannerTime, { color: colors.textSecondary }]}>{elapsed}</Text>
               </View>
             </View>
-            <Input label="Notas de la visita" placeholder="Trabajo realizado..." multiline numberOfLines={2} value={visitNotes} onChangeText={setVisitNotes} containerStyle={{ marginTop: Spacing.md }} />
-            <Button title="Finalizar visita" variant="outline" onPress={handleCheckOut} loading={visitLoading} size="sm" style={{ marginTop: Spacing.sm }} />
+            <Input label={t('client.visitNotes')} placeholder={t('client.visitNotesPlaceholder')} multiline numberOfLines={2} value={visitNotes} onChangeText={setVisitNotes} containerStyle={{ marginTop: Spacing.md }} />
+            <Button title={t('client.finishVisit')} variant="outline" onPress={handleCheckOut} loading={visitLoading} size="sm" style={{ marginTop: Spacing.sm }} />
           </View>
         ) : (
           <TouchableOpacity style={[styles.checkInBtn, { backgroundColor: colors.accent + '10', borderColor: colors.accent }]} onPress={handleCheckIn} disabled={visitLoading}>
             <Ionicons name="location-outline" size={20} color={colors.accent} />
-            <Text style={[styles.checkInText, { color: colors.accent }]}>{visitLoading ? 'Iniciando...' : 'Iniciar visita'}</Text>
+            <Text style={[styles.checkInText, { color: colors.accent }]}>{visitLoading ? t('client.starting') : t('client.startVisit')}</Text>
           </TouchableOpacity>
         )}
 
         <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="hardware-chip-outline" size={18} color={colors.accent} />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Equipos instalados</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('client.equipment')}</Text>
             <TouchableOpacity onPress={() => setShowAddEquip(!showAddEquip)}>
               <Ionicons name={showAddEquip ? 'close-circle' : 'add-circle'} size={22} color={colors.accent} />
             </TouchableOpacity>
@@ -258,21 +264,21 @@ export default function ClientDetailScreen({ navigation, route }: any) {
 
           {showAddEquip && (
             <View style={[styles.addEquipForm, { backgroundColor: colors.surfaceLight, borderColor: colors.border }]}>
-              <Input label="Nombre del equipo *" placeholder="Ej: Cámara Dahua" value={eqName} onChangeText={setEqName} />
+              <Input label={t('client.equipName')} placeholder={t('client.equipNamePlaceholder')} value={eqName} onChangeText={setEqName} />
               <View style={styles.row}>
-                <View style={{ flex: 1 }}><Input label="Marca" placeholder="Dahua" value={eqBrand} onChangeText={setEqBrand} /></View>
-                <View style={{ flex: 1 }}><Input label="Modelo" placeholder="DH-IPC" value={eqModel} onChangeText={setEqModel} /></View>
+                <View style={{ flex: 1 }}><Input label={t('client.brand')} placeholder={t('client.brandPlaceholder')} value={eqBrand} onChangeText={setEqBrand} /></View>
+                <View style={{ flex: 1 }}><Input label={t('client.model')} placeholder={t('client.modelPlaceholder')} value={eqModel} onChangeText={setEqModel} /></View>
               </View>
-              <Input label="N° de serie" placeholder="SN123456" value={eqSerial} onChangeText={setEqSerial} />
-              <Input label="Garantía hasta" placeholder="2027-01-15" value={eqWarranty} onChangeText={setEqWarranty} />
-              <Button title="Guardar equipo" onPress={handleAddEquipment} loading={savingEquip} size="sm" />
+              <Input label={t('client.serialNumber')} placeholder={t('client.serialPlaceholder')} value={eqSerial} onChangeText={setEqSerial} />
+              <Input label={t('client.warrantyUntil')} placeholder={t('client.warrantyPlaceholder')} value={eqWarranty} onChangeText={setEqWarranty} />
+              <Button title={t('common.save')} onPress={handleAddEquipment} loading={savingEquip} size="sm" />
             </View>
           )}
 
           {loadingEquip ? (
             <ActivityIndicator size="small" color={colors.accent} style={{ paddingVertical: Spacing.xl }} />
           ) : equipment.length === 0 ? (
-            <Text style={[styles.emptyText, { color: colors.textTertiary }]}>Sin equipos registrados</Text>
+            <Text style={[styles.emptyText, { color: colors.textTertiary }]}>{t('common.empty')}</Text>
           ) : (
             equipment.map((eq, i) => (
               <View key={eq.id} style={[styles.equipmentItem, { borderBottomColor: colors.divider }]}>
@@ -286,7 +292,7 @@ export default function ClientDetailScreen({ navigation, route }: any) {
                   </Text>
                   {eq.warranty_end && (
                     <Text style={[styles.equipmentWarranty, { color: colors.warning }]}>
-                      Garantía hasta {formatDate(eq.warranty_end)}
+                      {t('client.warrantyPrefix')}{formatDate(eq.warranty_end)}
                     </Text>
                   )}
                 </View>
@@ -301,9 +307,13 @@ export default function ClientDetailScreen({ navigation, route }: any) {
         <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="time-outline" size={18} color={colors.accent} />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Historial de visitas</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('client.visits')}</Text>
           </View>
-          {mockVisits.map((v) => (
+          {loadingVisits ? (
+            <ActivityIndicator size="small" color={colors.accent} style={{ paddingVertical: Spacing.xl }} />
+          ) : visits.length === 0 ? (
+            <Text style={[styles.emptyText, { color: colors.textTertiary }]}>{t('common.empty')}</Text>
+          ) : visits.map((v) => (
             <View key={v.id} style={[styles.visitItem, { borderBottomColor: colors.divider }]}>
               <View style={[styles.visitDot, { backgroundColor: colors.accent }]} />
               <View style={styles.visitInfo}>
@@ -324,14 +334,14 @@ export default function ClientDetailScreen({ navigation, route }: any) {
         {(client.lat && client.lng) && (
           <TouchableOpacity style={[styles.mapPreview, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={handleOpenMaps}>
             <Ionicons name="map-outline" size={20} color={colors.accent} />
-            <Text style={[styles.mapText, { color: colors.accent }]}>Ver en Google Maps</Text>
+            <Text style={[styles.mapText, { color: colors.accent }]}>{t('client.navigate')}</Text>
             <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
           </TouchableOpacity>
         )}
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }
 

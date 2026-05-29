@@ -12,51 +12,64 @@ import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { useTheme } from '../hooks/useTheme';
 import { useAppStore } from '../store';
+import { useTranslation } from '../hooks/useTranslation';
+import { ScreenWrapper } from '../components/ScreenWrapper';
 
 export default function SettingsScreen({ navigation }: any) {
   const { colors } = useTheme();
+  const { t, locale, setLocale } = useTranslation();
   const isDarkMode = useAppStore((s) => s.isDarkMode);
   const toggleDarkMode = useAppStore((s) => s.toggleDarkMode);
+  const showToast = useAppStore((s) => s.showToast);
+  const logout = useAppStore((s) => s.logout);
   const [notifications, setNotifications] = useState(true);
   const [sound, setSound] = useState(true);
 
+  const toggleLanguage = () => {
+    setLocale(locale === 'es' ? 'en' : 'es');
+    showToast(locale === 'es' ? t('settings.languageChangedToEnglish') : t('settings.languageChangedToSpanish'), 'success');
+  };
+
   const settingsSections = [
     {
-      title: 'Preferencias',
+      title: t('settings.preferences'),
       items: [
-        { icon: 'moon-outline', label: 'Modo oscuro', type: 'switch', value: isDarkMode, onToggle: toggleDarkMode },
-        { icon: 'notifications-outline', label: 'Notificaciones push', type: 'switch', value: notifications, onToggle: setNotifications },
-        { icon: 'volume-high-outline', label: 'Sonido', type: 'switch', value: sound, onToggle: setSound },
+        { icon: 'moon-outline', label: t('settings.darkMode'), type: 'switch', value: isDarkMode, onToggle: toggleDarkMode },
+        { icon: 'notifications-outline', label: t('settings.pushNotifications'), type: 'switch', value: notifications, onToggle: setNotifications },
+        { icon: 'volume-high-outline', label: t('settings.sound'), type: 'switch', value: sound, onToggle: setSound },
       ],
     },
     {
-      title: 'Idioma',
+      title: t('settings.language'),
       items: [
-        { icon: 'language-outline', label: 'Idioma', type: 'select', value: 'Español (Argentina)' },
+        { icon: 'language-outline', label: t('settings.language'), type: 'select', value: locale === 'es' ? 'Español' : 'English', onPress: toggleLanguage },
       ],
     },
     {
-      title: 'Moneda',
+      title: t('settings.currency'),
       items: [
-        { icon: 'cash-outline', label: 'Moneda predeterminada', type: 'select', value: 'ARS ($)' },
+        { icon: 'cash-outline', label: t('settings.currency'), type: 'select', value: 'ARS ($)' },
       ],
     },
     {
-      title: 'Datos',
+      title: t('settings.data'),
       items: [
-        { icon: 'download-outline', label: 'Exportar datos', type: 'action' },
-        { icon: 'trash-outline', label: 'Eliminar cuenta', type: 'action', danger: true },
+        { icon: 'download-outline', label: t('settings.exportData'), type: 'action', onPress: () => showToast(t('common.loading'), 'info') },
+        { icon: 'trash-outline', label: t('settings.deleteAccount'), type: 'action', danger: true, onPress: () => Alert.alert(t('settings.deleteAccount'), locale === 'es' ? '¿Estás seguro? Esta acción no se puede deshacer.' : 'Are you sure? This action cannot be undone.', [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('common.delete'), style: 'destructive', onPress: () => { logout(); navigation.navigate('Login'); }},
+        ]) },
       ],
     },
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenWrapper style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity accessibilityLabel="back" onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Configuración</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('settings.title')}</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -89,11 +102,15 @@ export default function SettingsScreen({ navigation }: any) {
                       trackColor={{ false: colors.border, true: colors.accent + '60' }}
                       thumbColor={(item as any).value ? colors.accent : colors.textTertiary}
                     />
+                  ) : (item as any).type === 'action' ? (
+                    <TouchableOpacity accessibilityLabel={item.label} style={styles.settingRight} onPress={(item as any).onPress}>
+                      <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+                    </TouchableOpacity>
                   ) : (
-                    <View style={styles.settingRight}>
+                    <TouchableOpacity accessibilityLabel={item.label} style={styles.settingRight} onPress={(item as any).onPress}>
                       <Text style={[styles.settingValue, { color: colors.textSecondary }]}>{(item as any).value}</Text>
                       <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
-                    </View>
+                    </TouchableOpacity>
                   )}
                 </View>
               ))}
@@ -101,7 +118,7 @@ export default function SettingsScreen({ navigation }: any) {
           </View>
         ))}
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }
 
